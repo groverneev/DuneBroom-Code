@@ -192,16 +192,6 @@ if __name__ == "__main__":
 
 
 
-
-
-
-
-
-
-
-
-
-
 #include <Wire.h>
 
 // ===== I2C Motor Driver Address
