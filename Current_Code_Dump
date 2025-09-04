@@ -363,3 +363,155 @@ bool WireWriteDataArray_i8(uint8_t reg, const int8_t *val, unsigned int len) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+from ultralytics import YOLO
+import cv2
+import sys
+
+model = YOLO("/home/neev/Downloads/runs/yolov11_custom/weights/best.pt")  # Path to your trained yolov11s model
+cap = cv2.VideoCapture(0)  # 0 = default Pi cam or USB cam
+
+ret, frame = cap.read()
+if not ret:
+    sys.exit()
+
+results = model(frame)
+
+for r in results:
+    for box in r.boxes:
+        cls_id = int(box.cls[0])
+        cls_name = r.names[cls_id]
+        print("Detected:", cls_name)  # <-- Only prints "Nature"/"Trash"
+#cv2.imshow("YOLOv11s Detection", annotated)
+
+cap.release()
+cv2.destroyAllWindows()
+
+
+
+
+
+
+
+
+import serial
+import json
+
+# Initialize serial communication
+arduino_port = '/dev/ttyACM0'  # Replace with your Arduino port
+baud_rate = 9600
+ser = serial.Serial(arduino_port, baud_rate, timeout=1)
+
+try:
+    while True:
+        # Read a line of data from the serial port
+        if ser.in_waiting > 0:
+            line = ser.readline().decode('utf-8').strip()
+            lines = line.split(",")
+            try:
+                # Parse the JSON data into a Python dictionary
+                if len(lines) == 4:
+                    print (lines)
+            except json.JSONDecodeError:
+                print("Invalid arduino data received")
+except KeyboardInterrupt:
+    print("Exiting program")
+finally:
+    ser.close()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from ultralytics import YOLO
+import cv2
+import serial
+import re
+
+# Initialize serial communication
+arduino_port = '/dev/ttyACM0'  # Replace with your Arduino port
+baud_rate = 9600
+ser = serial.Serial(arduino_port, baud_rate, timeout=1)
+
+model = YOLO("/home/neev/Downloads/runs/yolov11_custom/weights/best.pt")  # Path to your trained yolov11s model
+#cap = cv2.VideoCapture(0)  # 0 = default Pi cam or USB cam
+
+try:
+    while True:
+
+        # Read a line of data from the serial port
+        if ser.in_waiting > 0:
+            lines = ser.readline().decode('utf-8').strip()
+            #lines = float(lines)
+            print (lines)
+            print (type(lines))
+
+            # Remove all non-numeric characters except for the decimal point
+            cleaned_string = re.sub(r'[^\d.]', '', lines)
+
+            # Attempt to convert to float
+            float_value = float(cleaned_string)
+            print(f"Successfully converted to float: {float_value}")
+
+            try:
+                # Parse the JSON data into a Python dictionary
+                #if len(lines) == 4:
+                #    print (lines)
+                ser.write("trash\n")
+                
+
+                # This is where I read data from arduino 
+                # Check distance and stop, then activate image capture 
+                # If trash identified, then move forward for a couple of seconds 
+                # If no trash identified, then move backwards for a couple of seconds 
+                # The operation above is only for phase 1 testing 
+                """
+                ret, frame = cap.read()
+                if not ret:
+                    break
+                
+                results = model(frame)  # Run detection
+                annotated = results[0].plot()  # Draw boxes
+
+                cv2.imshow("YOLOv11s Detection", annotated)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+                """
+            except Exception as e: 
+                print(e)
+
+except Exception as e:
+    print(e)
+#cap.release()
+cv2.destroyAllWindows()
+
+
+# ser.write(b”Trash\n”)
+# This command is used to write to arduino 
+
+
+
+
+
+
+
