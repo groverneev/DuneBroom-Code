@@ -1,0 +1,130 @@
+#include <Wire.h>
+
+// I2C motor driver address
+#define I2C_ADDR        0x34
+
+// Register addresses
+#define MOTOR_TYPE_ADDR               0x14
+#define MOTOR_ENCODER_POLARITY_ADDR   0x15
+#define MOTOR_FIXED_SPEED_ADDR        0x33
+#define MOTOR_ENCODER_TOTAL_ADDR      0x3C
+
+// Motor type
+#define MOTOR_TYPE_JGB37_3865_520_12V_150RPM 3
+
+// Variables
+uint8_t MotorType = MOTOR_TYPE_JGB37_3865_520_12V_150RPM;
+uint8_t MotorEncoderPolarity = 0;
+int8_t stopCmd[4]     = {0, 0, 0, 0};
+int8_t forwardCmd[4]  = {50, 50, 0, 0};     
+int8_t backwardCmd[4] = {-50, -50, 0, 0};
+int8_t turnLeftCmd[4] = {-30, 30, 0, 0};  // Left motor backward, right motor forward
+int8_t EncodeReset[16] = {0};
+int32_t EncodeTotal[4];
+
+// Ultrasonic sensor
+const int trigPin = 9;
+const int echoPin = 10;
+float duration, distance;
+
+// Obstacle detection counter
+int obstacleCount = 0;
+
+void setup() {
+  Wire.begin();
+  Serial.begin(9600);
+  delay(200);
+
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  // Set motor type and encoder polarity
+  WireWriteDataArray(MOTOR_TYPE_ADDR, &MotorType, 1);
+  delay(5);
+  WireWriteDataArray(MOTOR_ENCODER_POLARITY_ADDR, &MotorEncoderPolarity, 1);
+
+  // Start moving forward
+  WireWriteDataArray(MOTOR_FIXED_SPEED_ADDR, forwardCmd, 4);
+}
+
+void loop() {
+  distance = measureDistance();
+  //Serial.print("Distance: ");
+  //Serial.println(distance);
+
+  if (distance < 20) {
+    // Stop
+    WireWriteDataArray(MOTOR_FIXED_SPEED_ADDR, stopCmd, 4);
+    
+    if (obstacleCount == 0) {
+      // First obstacle: wait 2 seconds, back up, turn left
+      delay(2000);
+      
+      // Back up a tiny bit
+      WireWriteDataArray(MOTOR_FIXED_SPEED_ADDR, backwardCmd, 4);
+      delay(500);  // Adjust this delay for how far to back up
+      
+      // Stop
+      WireWriteDataArray(MOTOR_FIXED_SPEED_ADDR, stopCmd, 4);
+      delay(100);
+      
+      // Turn left
+      WireWriteDataArray(MOTOR_FIXED_SPEED_ADDR, turnLeftCmd, 4);
+      delay(800);  // Adjust this delay for how much to turn
+      
+      obstacleCount++;
+    } 
+    else if (obstacleCount == 1) {
+      // Second obstacle: wait 2 seconds, continue forward
+      delay(2000);
+      
+      obstacleCount++;
+    }
+
+    // After action → stop and go back to normal loop
+    WireWriteDataArray(MOTOR_FIXED_SPEED_ADDR, stopCmd, 4);
+    delay(200);
+    WireWriteDataArray(MOTOR_FIXED_SPEED_ADDR, forwardCmd, 4);
+  }
+
+  delay(100);
+}
+
+// ---- Measure Distance ----
+float measureDistance() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  duration = pulseIn(echoPin, HIGH, 30000); // 30ms timeout
+  if (duration == 0) return 999; // if no echo
+  return duration * 0.034 / 2;
+}
+
+// ---- I2C Communication Functions ----
+bool WireWriteByte(uint8_t val) {
+  Wire.beginTransmission(I2C_ADDR);
+  Wire.write(val);
+  return Wire.endTransmission() == 0;
+}
+
+bool WireWriteDataArray(uint8_t reg, uint8_t *val, unsigned int len) {
+  Wire.beginTransmission(I2C_ADDR);
+  Wire.write(reg);
+  for (unsigned int i = 0; i < len; i++) {
+    Wire.write(val[i]);
+  }
+  return Wire.endTransmission() == 0;
+}
+
+int WireReadDataArray(uint8_t reg, uint8_t *val, unsigned int len) {
+  if (!WireWriteByte(reg)) return -1;
+  Wire.requestFrom(I2C_ADDR, len);
+  for (unsigned int i = 0; i < len && Wire.available(); i++) {
+    val[i] = Wire.read();
+  }
+  return len;
+}
