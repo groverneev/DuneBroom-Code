@@ -137,6 +137,18 @@ class Rover:
         """Spin one raw driver channel, ignoring the track mapping (wiring test)."""
         self._request(f"C {int(channel)} {int(speed)}", "OK C")
 
+    def pwm_channel(self, channel: int, duty: int) -> None:
+        """Open-loop PWM on one raw driver channel (no encoder feedback; diagnostics)."""
+        self._request(f"P {int(channel)} {int(duty)}", "OK P")
+
+    def read_register(self, reg: int, length: int) -> list[int]:
+        """Raw bytes from a motor driver register (diagnostics)."""
+        return [int(v) for v in self._request(f"RD {int(reg)} {int(length)}", "REG").split()[2:]]
+
+    def write_register(self, reg: int, values: list[int]) -> None:
+        """Write 1-4 raw bytes to a motor driver register (diagnostics)."""
+        self._request("WR " + " ".join(str(int(v)) for v in [reg, *values]), "OK WR")
+
     def stop(self) -> None:
         self._request("S", "OK S")
 

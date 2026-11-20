@@ -18,6 +18,11 @@
 //   X                                RAW <ms> <e0> <e1> <e2> <e3>
 //   B                                BAT <millivolts>
 //
+// Diagnostics (wiring and driver-board debugging):
+//   P <ch> <duty>                    OK P     open-loop PWM on one raw channel (no encoder feedback)
+//   RD <reg> <len>                   REG <reg> <b0> ... <bN>   read 1-16 raw bytes from the driver
+//   WR <reg> <b0> [b1 b2 b3]         OK WR    write raw bytes to the driver
+//
 // Speeds are the driver's closed-loop speed units (-100..100).
 // DONE reports ticks travelled by each track since the move began.
 // DONE reasons: TARGET, STOP, WATCHDOG (no command for WATCHDOG_MS), STALL
@@ -29,12 +34,13 @@
 #include <string.h>
 #include <ctype.h>
 
-#define FW_VERSION "1"
+#define FW_VERSION "2"
 
 const uint8_t DRV_ADDR = 0x34;
 const uint8_t REG_BATTERY = 0x00;
 const uint8_t REG_MOTOR_TYPE = 0x14;
 const uint8_t REG_ENC_POLARITY = 0x15;
+const uint8_t REG_PWM = 0x1F;
 const uint8_t REG_SPEED = 0x33;
 const uint8_t REG_ENC_TOTAL = 0x3C;
 const uint8_t MOTOR_TYPE_JGB37_520_12V_150RPM = 3;
@@ -51,7 +57,7 @@ const int MIN_SPEED = 12;
 const int MAX_SPEED = 100;
 const int DEFAULT_SPEED = 50;
 
-enum Mode : uint8_t { IDLE, DRIVE, ROTATE, MANUAL, CHANNEL };
+enum Mode : uint8_t { IDLE, DRIVE, ROTATE, MANUAL, CHANNEL, OPENLOOP };
 
 uint8_t leftCh = 0, rightCh = 1;
 int8_t leftSign = 1, rightSign = 1;
@@ -117,7 +123,8 @@ bool setSides(long l, long r) {
 
 bool stopMotors() {
   const int8_t s[4] = {0, 0, 0, 0};
-  return writeSpeeds(s);
+  bool pwmOk = writeReg(REG_PWM, (const uint8_t *)s, 4);
+  return writeSpeeds(s) && pwmOk;
 }
 
 // ---- motion ----
@@ -127,6 +134,7 @@ char modeCode() {
     case DRIVE: return 'D';
     case ROTATE: return 'R';
     case MANUAL: return 'M';
+    case OPENLOOP: return 'P';
     default: return 'C';
   }
 }
@@ -205,10 +213,10 @@ void handleLine(char *line) {
   char *cmd = strtok(line, " \t");
   if (!cmd) return;
   for (char *p = cmd; *p; p++) *p = toupper(*p);
-  long a[4];
+  long a[5];
   uint8_t n = 0;
   char *tok;
-  while (n < 4 && (tok = strtok(NULL, " \t")) != NULL) a[n++] = atol(tok);
+  while (n < 5 && (tok = strtok(NULL, " \t")) != NULL) a[n++] = atol(tok);
 
   if (!strcmp(cmd, "H")) return;
   if (!strcmp(cmd, "PING")) { Serial.println(F("PONG dunebroom_motor " FW_VERSION)); return; }
@@ -258,6 +266,37 @@ void handleLine(char *line) {
     s[a[0]] = clampSpeed(a[1]);
     if (!writeSpeeds(s)) { finishMove(F("I2C")); return; }
     Serial.println(F("OK C"));
+    return;
+  }
+
+  if (!strcmp(cmd, "P")) {
+    if (n != 2 || a[0] < 0 || a[0] > 3) { printErr(F("ARGS")); return; }
+    if (mode != IDLE && mode != OPENLOOP) { printErr(F("BUSY")); return; }
+    if (mode == IDLE && !beginMode(OPENLOOP)) { printErr(F("I2C")); return; }
+    int8_t s[4] = {0, 0, 0, 0};
+    s[a[0]] = clampSpeed(a[1]);
+    if (!writeReg(REG_PWM, (const uint8_t *)s, 4)) { finishMove(F("I2C")); return; }
+    Serial.println(F("OK P"));
+    return;
+  }
+
+  if (!strcmp(cmd, "RD")) {
+    if (n != 2 || a[0] < 0 || a[0] > 255 || a[1] < 1 || a[1] > 16) { printErr(F("ARGS")); return; }
+    uint8_t b[16];
+    if (!readReg((uint8_t)a[0], b, (uint8_t)a[1])) { printErr(F("I2C")); return; }
+    Serial.print(F("REG "));
+    Serial.print(a[0]);
+    for (uint8_t i = 0; i < a[1]; i++) { Serial.print(' '); Serial.print(b[i]); }
+    Serial.println();
+    return;
+  }
+
+  if (!strcmp(cmd, "WR")) {
+    if (n < 2 || a[0] < 0 || a[0] > 255) { printErr(F("ARGS")); return; }
+    uint8_t b[4];
+    for (uint8_t i = 1; i < n; i++) b[i - 1] = (uint8_t)a[i];
+    if (!writeReg((uint8_t)a[0], b, n - 1)) { printErr(F("I2C")); return; }
+    Serial.println(F("OK WR"));
     return;
   }
 
