@@ -18,6 +18,7 @@ class RoverConfig:
     right_channel: int
     left_sign: int
     right_sign: int
+    closed_loop: bool
     drive_speed: int
     turn_speed: int
     ticks_per_mm: float | None
@@ -42,6 +43,7 @@ def load_config(path: str | Path = DEFAULT_CONFIG_PATH) -> RoverConfig:
         right_channel=int(motors["right_channel"]),
         left_sign=int(motors["left_sign"]),
         right_sign=int(motors["right_sign"]),
+        closed_loop=bool(motors["closed_loop"]),
         drive_speed=int(motors["drive_speed"]),
         turn_speed=int(motors["turn_speed"]),
         ticks_per_mm=float(cal["ticks_per_mm"]) or None,

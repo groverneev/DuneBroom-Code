@@ -69,6 +69,7 @@ class Rover:
             self._threads.append(t)
         c = self.config
         self._request(f"MAP {c.left_channel} {c.right_channel} {c.left_sign} {c.right_sign}", "OK MAP")
+        self._request(f"CL {int(c.closed_loop)}", "OK CL")
         return self
 
     def close(self) -> None:
@@ -132,6 +133,14 @@ class Rover:
     def set_speeds(self, left: int, right: int) -> None:
         """Run the tracks continuously until changed or stop() (teleop)."""
         self._request(f"M {int(left)} {int(right)}", "OK M")
+
+    def run_for(self, left: int, right: int, seconds: float) -> None:
+        """Run the tracks at fixed speeds for a time, then stop (no encoders needed)."""
+        self.set_speeds(left, right)
+        try:
+            time.sleep(seconds)
+        finally:
+            self.stop()
 
     def spin_channel(self, channel: int, speed: int) -> None:
         """Spin one raw driver channel, ignoring the track mapping (wiring test)."""

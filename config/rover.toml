@@ -7,15 +7,20 @@ baud = 115200
 
 [motors]
 # Motor driver channel (0-3, printed on the board as M1-M4) of each track, and
-# the sign that makes that track drive forward. Confirm with
-# `python3 tools/rover_cli.py channels`.
-left_channel = 0
-right_channel = 1
+# the sign that makes that track drive forward. Measured 2026-11-20:
+# left track on M4, right track on M3, positive = forward.
+left_channel = 3
+right_channel = 2
 left_sign = 1
 right_sign = 1
-# Closed-loop speed units on the driver, 12..100.
-drive_speed = 50
-turn_speed = 35
+# false = open-loop PWM. true = the driver's closed-loop speed mode, which needs
+# working encoders: with dead encoders it runs the motors at full power.
+# Encoders read nothing as of 2026-11-20, so keep this false until fixed.
+closed_loop = false
+# PWM duty % (open loop) or driver speed units (closed loop). In open loop,
+# ~30% does not move the tracks; 60% moves them slowly.
+drive_speed = 70
+turn_speed = 70
 
 [calibration]
 # Encoder ticks per mm driven and per degree turned, measured on sand.

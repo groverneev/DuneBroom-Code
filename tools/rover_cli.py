@@ -6,6 +6,7 @@
     python3 tools/rover_cli.py channels        spin each driver channel to find the tracks
     python3 tools/rover_cli.py drive --ticks 3000   (or --mm 500 once calibrated)
     python3 tools/rover_cli.py turn --ticks 1500    (or --deg 90; + = clockwise)
+    python3 tools/rover_cli.py run --left 70 --right 70 --seconds 2   timed, no encoders needed
 """
 
 from __future__ import annotations
@@ -67,6 +68,11 @@ def cmd_turn(rover: Rover, args) -> None:
         _report(rover.rotate_ticks(args.ticks, args.speed))
 
 
+def cmd_run(rover: Rover, args) -> None:
+    rover.run_for(args.left, args.right, args.seconds)
+    print(f"ran left={args.left} right={args.right} for {args.seconds} s")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--config", default=None, help="path to rover.toml")
@@ -93,6 +99,12 @@ def main() -> None:
     g.add_argument("--deg", type=float)
     p.add_argument("--speed", type=int, default=None)
     p.set_defaults(func=cmd_turn)
+
+    p = sub.add_parser("run")
+    p.add_argument("--left", type=int, required=True)
+    p.add_argument("--right", type=int, required=True)
+    p.add_argument("--seconds", type=float, required=True)
+    p.set_defaults(func=cmd_run)
 
     args = parser.parse_args()
     config = load_config(args.config) if args.config else load_config()

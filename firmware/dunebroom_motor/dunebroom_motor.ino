@@ -9,6 +9,9 @@
 //   PING                             PONG dunebroom_motor <version>
 //   H                                (none) heartbeat, feeds the watchdog
 //   MAP <lch> <rch> <lsign> <rsign>  OK MAP   driver channel (0-3) of each track and its forward sign
+//   CL <0|1>                         OK CL    0 = open-loop PWM (default), 1 = driver closed-loop speed
+//                                             mode (needs working encoders; without them the driver
+//                                             runs the motors at full power)
 //   D <ticks> [speed]                OK D, then DONE D <reason> <left> <right>   drive straight, -ticks = backward
 //   R <ticks> [speed]                OK R, then DONE R ...                       rotate in place, +ticks = clockwise
 //   M <left> <right>                 OK M     continuous track speeds (teleop); M 0 0 stops
@@ -23,7 +26,8 @@
 //   RD <reg> <len>                   REG <reg> <b0> ... <bN>   read 1-16 raw bytes from the driver
 //   WR <reg> <b0> [b1 b2 b3]         OK WR    write raw bytes to the driver
 //
-// Speeds are the driver's closed-loop speed units (-100..100).
+// Speeds are PWM duty % in open-loop mode, or the driver's speed units in
+// closed-loop mode (-100..100). D and R need working encoders.
 // DONE reports ticks travelled by each track since the move began.
 // DONE reasons: TARGET, STOP, WATCHDOG (no command for WATCHDOG_MS), STALL
 // (tracks stopped turning), I2C (driver not answering).
@@ -34,7 +38,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#define FW_VERSION "2"
+#define FW_VERSION "3"
 
 const uint8_t DRV_ADDR = 0x34;
 const uint8_t REG_BATTERY = 0x00;
@@ -43,6 +47,7 @@ const uint8_t REG_ENC_POLARITY = 0x15;
 const uint8_t REG_PWM = 0x1F;
 const uint8_t REG_SPEED = 0x33;
 const uint8_t REG_ENC_TOTAL = 0x3C;
+const uint8_t MOTOR_TYPE_NO_ENCODER = 0;
 const uint8_t MOTOR_TYPE_JGB37_520_12V_150RPM = 3;
 
 const unsigned long WATCHDOG_MS = 600;
@@ -61,6 +66,7 @@ enum Mode : uint8_t { IDLE, DRIVE, ROTATE, MANUAL, CHANNEL, OPENLOOP };
 
 uint8_t leftCh = 0, rightCh = 1;
 int8_t leftSign = 1, rightSign = 1;
+bool closedLoop = false;
 
 Mode mode = IDLE;
 long targetTicks = 0;
@@ -112,7 +118,9 @@ bool readSides(long &l, long &r) {
 
 int clampSpeed(long s) { return (int)constrain(s, -MAX_SPEED, MAX_SPEED); }
 
-bool writeSpeeds(const int8_t s[4]) { return writeReg(REG_SPEED, (const uint8_t *)s, 4); }
+bool writeSpeeds(const int8_t s[4]) {
+  return writeReg(closedLoop ? REG_SPEED : REG_PWM, (const uint8_t *)s, 4);
+}
 
 bool setSides(long l, long r) {
   int8_t s[4] = {0, 0, 0, 0};
@@ -124,7 +132,7 @@ bool setSides(long l, long r) {
 bool stopMotors() {
   const int8_t s[4] = {0, 0, 0, 0};
   bool pwmOk = writeReg(REG_PWM, (const uint8_t *)s, 4);
-  return writeSpeeds(s) && pwmOk;
+  return writeReg(REG_SPEED, (const uint8_t *)s, 4) && pwmOk;
 }
 
 // ---- motion ----
@@ -234,6 +242,17 @@ void handleLine(char *line) {
     if (mode != IDLE) { printErr(F("BUSY")); return; }
     leftCh = a[0]; rightCh = a[1]; leftSign = a[2]; rightSign = a[3];
     Serial.println(F("OK MAP"));
+    return;
+  }
+
+  if (!strcmp(cmd, "CL")) {
+    if (n != 1 || (a[0] != 0 && a[0] != 1)) { printErr(F("ARGS")); return; }
+    if (mode != IDLE) { printErr(F("BUSY")); return; }
+    stopMotors();
+    const uint8_t type = a[0] ? MOTOR_TYPE_JGB37_520_12V_150RPM : MOTOR_TYPE_NO_ENCODER;
+    if (!writeReg(REG_MOTOR_TYPE, &type, 1)) { printErr(F("I2C")); return; }
+    closedLoop = a[0];
+    Serial.println(F("OK CL"));
     return;
   }
 
@@ -357,7 +376,7 @@ void setup() {
   Wire.begin();
   Wire.setWireTimeout(3000, true);
   delay(200);
-  writeReg(REG_MOTOR_TYPE, &MOTOR_TYPE_JGB37_520_12V_150RPM, 1);
+  writeReg(REG_MOTOR_TYPE, &MOTOR_TYPE_NO_ENCODER, 1);
   delay(5);
   const uint8_t polarity = 0;
   writeReg(REG_ENC_POLARITY, &polarity, 1);
