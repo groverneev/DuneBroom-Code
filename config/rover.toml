@@ -1,0 +1,24 @@
+# DuneBroom rover configuration, read by rover/config.py.
+
+[serial]
+# "auto" picks the first /dev/serial/by-id/*Arduino* device, else /dev/ttyACM0.
+port = "auto"
+baud = 115200
+
+[motors]
+# Motor driver channel (0-3, printed on the board as M1-M4) of each track, and
+# the sign that makes that track drive forward. Confirm with
+# `python3 tools/rover_cli.py channels`.
+left_channel = 0
+right_channel = 1
+left_sign = 1
+right_sign = 1
+# Closed-loop speed units on the driver, 12..100.
+drive_speed = 50
+turn_speed = 35
+
+[calibration]
+# Encoder ticks per mm driven and per degree turned, measured on sand.
+# 0 means not calibrated yet (drive_mm / turn_deg refuse to run).
+ticks_per_mm = 0.0
+ticks_per_degree = 0.0
