@@ -2,8 +2,12 @@
 
 Tracked rover that surveys a beach plot with a downward camera and reports
 trash density (items/m²). Measures only; does not collect. v1 (trash
-collector) is deleted; ignore it. Project site source: `../DuneBroom-Website`.
+collector) is deleted; ignore it. Project site source: `..Projects/DuneBroom-Website`.
+Information in the website might not be up to date.
 The research plan is a rough draft; drop requirements that don't serve the goal.
+(You don't have this plan)
+Looking at a picture of the robot from the dunebroom website can be helpful, ask me for
+other pictures if needed
 
 ## Rules
 
@@ -19,7 +23,8 @@ The research plan is a rough draft; drop requirements that don't serve the goal.
 
 - Raspberry Pi 5 (8 GB), hostname `neev-rpi5-green`, user `groverneev`, repo at
   `~/DuneBroom_Code`. Debian 13, Python 3.13, pyserial, arduino-cli + avr core.
-  No OpenCV/ultralytics yet.
+  No OpenCV/ultralytics yet (we can add any package needed; act like you own the pi
+  and feel free to do what you need on it)
 - Elegoo Uno R3 on USB (`/dev/serial/by-id/*Arduino*`), I2C to a Hiwonder
   4-ch encoder motor driver V1.4 at 0x34. Battery ~12.5 V.
 - Two JGB37-3865-520 motors (45:1, 12 V, 150 RPM) with encoder boards.
@@ -55,14 +60,15 @@ The research plan is a rough draft; drop requirements that don't serve the goal.
 - Arduino owns motor safety: 600 ms watchdog (Pi heartbeat), stall stop,
   non-blocking moves.
 
-## Roadmap
+## Rough Roadmap
 
 1. Motion: accurate drive/turn by distance (blocked on encoders).
 2. Capture: locked camera settings, frames saved with timestamps + odometry.
 3. Camera calibration: px/cm, footprint, lens distortion -> config.
 4. Dry-run lanes without ML; check coverage/area; these frames become training data.
 5. Ground shift via phase correlation; surveyed-area accumulation.
-6. Debris detector: YOLOv8 fine-tune (TACO + own images), export for Pi, tiling.
+6. Debris detector: an ML model trained on our own images (plus public data
+   if it helps), fast enough on the Pi; architecture not fixed.
 7. Count each item once (new-ground strips + lane bands).
 8. Results: density, per-item CSV, detection map, summary JSON.
 9. Evaluation tools: ground-truth format, replay, precision/recall, MAPE, CV.
