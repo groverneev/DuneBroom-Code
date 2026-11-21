@@ -72,7 +72,7 @@ other pictures if needed
 7. Count each item once (new-ground strips + lane bands).
 8. Results: density, per-item CSV, detection map, summary JSON.
 9. Evaluation tools: ground-truth format, replay, precision/recall, MAPE, CV.
-10. Field UI: Pi hotspot web page (start/stop/status/e-stop).
+10. Some form of Field UI
 
 ## Status (2026-11-20)
 
@@ -82,4 +82,3 @@ other pictures if needed
   encoders itself; if not, the encoders are dead.
 - **Works:** timed open-loop driving (`rover_cli.py run`), watchdog, Pi<->Uno link.
 - **Blocked:** distance/angle moves and calibration (need encoders).
-- **Could start now:** Phase 2 capture (needs `python3-opencv`).
