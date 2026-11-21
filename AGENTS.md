@@ -2,7 +2,7 @@
 
 Tracked rover that surveys a beach plot with a downward camera and reports
 trash density (items/m²). Measures only; does not collect. v1 (trash
-collector) is deleted; ignore it. Project site source: `..Projects/DuneBroom-Website`.
+collector) is deleted; ignore it. Project site source: `../DuneBroom-Website`.
 Information in the website might not be up to date.
 The research plan is a rough draft; drop requirements that don't serve the goal.
 (You don't have this plan)
@@ -33,6 +33,11 @@ other pictures if needed
   encoder boards are lit and cables are seated. In encoder motor type the
   driver ignores PWM, and speed mode on any channel spins both motors flat out.
   Firmware therefore runs open-loop PWM: ~30% doesn't move the tracks, 60% is slow.
+- Pi power: currently an ad-hoc cell holder; undervoltage warnings seen and the
+  Pi died when it ran flat. Ordered 2026-11-20: SunFounder PiPower 5 UPS HAT
+  (5 V/5 A, USB-C PD 5-15 V in, 7.4 V 2000 mAh pack, I2C battery %/source
+  monitoring). Long days: Anker Nano power bank on its USB-C input. Motors stay
+  on the Hiwonder 11.1 V 6000 mAh pack (separate charger).
 - USB webcam "Full HD webcam" on `/dev/video0`; MJPG up to 1920x1080@30.
   Auto exposure/focus/white balance are on by default (must be locked for surveys).
 
@@ -82,3 +87,9 @@ other pictures if needed
   encoders itself; if not, the encoders are dead.
 - **Works:** timed open-loop driving (`rover_cli.py run`), watchdog, Pi<->Uno link.
 - **Blocked:** distance/angle moves and calibration (need encoders).
+- **When the PiPower 5 arrives:** verify under load that `vcgencmd get_throttled`
+  stays 0x0, the Pi keeps running when the Anker is plugged in, and battery %
+  rises while running (if any fails, return it; fallback is Geekworm X1202).
+  Then add battery monitoring (Pi % + motor pack voltage) and survey guards:
+  refuse to start / stop and save when low. Needs a Pi 5 Active Cooler and a
+  mount on the chassis (it sits on top of the Pi).
