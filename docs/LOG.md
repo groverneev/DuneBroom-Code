@@ -4,49 +4,6 @@ Append-only, newest entry at the bottom. One dated entry per work session:
 what was done, what was measured, what failed, what was decided. Never edit
 old entries; correct them in a new one. Current state lives in `AGENTS.md`.
 
-## 2026-11-21 — v2 restart: cleanup, firmware, motor diagnostics, power plan
-
-Backfilled 2026-11-22; covers the Fri 11-20 and Sat 11-21 sessions combined.
-Time: ~6 h (estimate).
-
-**Done**
-- Scoped the project to v2 (survey rover, measures density, no collection).
-  Deleted all v1 code and notebooks.
-- Wrote the roadmap and decisions now in `AGENTS.md`: start at a marked
-  corner, serpentine lanes, drive first / analyze after, all on the Pi offline,
-  detector is "an ML model" (architecture not fixed).
-- New Uno firmware `firmware/dunebroom_motor` (serial protocol, 600 ms
-  watchdog, Pi heartbeat, stall stop, non-blocking moves) and Pi package
-  `rover/` + `config/rover.toml` + `tools/rover_cli.py`, `tools/flash.sh`,
-  `tools/diag_driver.py`, `tools/diag_interactive.py`.
-- Linked the Pi as a T3 environment so laptop agents can run commands on it.
-- Set up `AGENTS.md` as the single cross-session context file.
-
-**Measured**
-- Tracks: right = M3 (ch 2), left = M4 (ch 3), positive = forward.
-- Encoders: zero counts on every channel, with motors running and when
-  turned by hand. Encoder boards lit, cables seated.
-- Driver in encoder motor type (3): ignores PWM; speed mode on any one
-  channel spins both motors at full power. In no-encoder type (0): per-channel
-  PWM works; ~30 % doesn't move the tracks, 60 % is slow.
-- Motor pack (Hiwonder 11.1 V 6000 mAh, 3S Li-ion): ~12.5 V. Charge socket
-  is DC 5.5 × 2.5 mm (Hiwonder spec); needs a 12.6 V CC/CV charger, ~2 A.
-
-**Failed**
-- Closed-loop (encoder) driving: unusable until encoders count.
-- Pi died when its ad-hoc cell holder ran flat; undervoltage warnings before.
-
-**Decided**
-- Firmware defaults to open-loop PWM (`closed_loop = false`); never enable
-  closed loop while encoders are broken.
-- Separate Pi battery: ordered SunFounder PiPower 5; Anker Nano power bank on
-  its input for long days. Motors keep their own pack.
-
-**Next**
-- Encoder test: one encoder wired straight to the Uno (VCC→5V, GND, A→D2,
-  B→D3), count pulses in firmware.
-- Install and test the PiPower 5.
-
 ## 2026-11-22 — PiPower 5 UPS HAT installed
 
 **Done**
@@ -91,3 +48,46 @@ Time: ~6 h (estimate).
   stress test.
 - Test with the Anker power bank on INPUT.
 - Battery monitoring + low-battery survey guards; chassis mount for Pi + HAT.
+
+## 2026-11-21 — v2 restart: cleanup, firmware, motor diagnostics, power plan
+
+Backfilled 2026-11-22; covers the Fri 11-20 and Sat 11-21 sessions combined.
+Time: ~6 h (estimate).
+
+**Done**
+- Scoped the project to v2 (survey rover, measures density, no collection).
+  Deleted all v1 code and notebooks.
+- Wrote the roadmap and decisions now in `AGENTS.md`: start at a marked
+  corner, serpentine lanes, drive first / analyze after, all on the Pi offline,
+  detector is "an ML model" (architecture not fixed).
+- New Uno firmware `firmware/dunebroom_motor` (serial protocol, 600 ms
+  watchdog, Pi heartbeat, stall stop, non-blocking moves) and Pi package
+  `rover/` + `config/rover.toml` + `tools/rover_cli.py`, `tools/flash.sh`,
+  `tools/diag_driver.py`, `tools/diag_interactive.py`.
+- Linked the Pi as a T3 environment so laptop agents can run commands on it.
+- Set up `AGENTS.md` as the single cross-session context file.
+
+**Measured**
+- Tracks: right = M3 (ch 2), left = M4 (ch 3), positive = forward.
+- Encoders: zero counts on every channel, with motors running and when
+  turned by hand. Encoder boards lit, cables seated.
+- Driver in encoder motor type (3): ignores PWM; speed mode on any one
+  channel spins both motors at full power. In no-encoder type (0): per-channel
+  PWM works; ~30 % doesn't move the tracks, 60 % is slow.
+- Motor pack (Hiwonder 11.1 V 6000 mAh, 3S Li-ion): ~12.5 V. Charge socket
+  is DC 5.5 × 2.5 mm (Hiwonder spec); needs a 12.6 V CC/CV charger, ~2 A.
+
+**Failed**
+- Closed-loop (encoder) driving: unusable until encoders count.
+- Pi died when its ad-hoc cell holder ran flat; undervoltage warnings before.
+
+**Decided**
+- Firmware defaults to open-loop PWM (`closed_loop = false`); never enable
+  closed loop while encoders are broken.
+- Separate Pi battery: ordered SunFounder PiPower 5; Anker Nano power bank on
+  its input for long days. Motors keep their own pack.
+
+**Next**
+- Encoder test: one encoder wired straight to the Uno (VCC→5V, GND, A→D2,
+  B→D3), count pulses in firmware.
+- Install and test the PiPower 5.
