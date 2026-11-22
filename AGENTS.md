@@ -18,6 +18,9 @@ other pictures if needed
 - Never set `closed_loop = true` while encoders are broken: the driver then
   runs both motors at full power regardless of channel.
 - Update **Status** below in the same commit as the work it describes.
+- Logbook: `docs/LOG.md` is the append-only history (one dated entry per work
+  session: done, measured, failed, decided). Add an entry with each work
+  commit. Keep this file to current state; history goes in the log.
 
 ## Hardware (measured)
 
