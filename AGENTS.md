@@ -33,11 +33,16 @@ other pictures if needed
   encoder boards are lit and cables are seated. In encoder motor type the
   driver ignores PWM, and speed mode on any channel spins both motors flat out.
   Firmware therefore runs open-loop PWM: ~30% doesn't move the tracks, 60% is slow.
-- Pi power: currently an ad-hoc cell holder; undervoltage warnings seen and the
-  Pi died when it ran flat. Ordered 2026-11-20: SunFounder PiPower 5 UPS HAT
-  (5 V/5 A, USB-C PD 5-15 V in, 7.4 V 2000 mAh pack, I2C battery %/source
-  monitoring). Long days: Anker Nano power bank on its USB-C input. Motors stay
-  on the Hiwonder 11.1 V 6000 mAh pack (separate charger).
+- Pi power: SunFounder PiPower 5 UPS HAT (I2C 0x5c, fw 2.0.9) on the GPIO
+  header, 7.4 V 2000 mAh pack. Charge via the HAT's USB-C **INPUT** port (PD,
+  negotiates 15 V), never the Pi's own USB-C. CHARGE SEL DIP both ON = 20 W
+  (~2.35 A measured); with 96 W charger the HAT draws ~26 W total. Pi draws
+  ~4.5 W idle, ~10 W at 4-core stress; ~1 A from the pack at idle on battery
+  (~2 h runtime from full). Buzzer beeps when input is unplugged (normal).
+  `pipower5` CLI 1.2.3 (`-a` full status, `-bp` %, `-ichg`, `-ii`);
+  `pipower5.service` enabled, safe shutdown at 10 %; dashboard on :34001.
+  I2C was enabled with raspi-config. Long days: Anker Nano power bank on the
+  INPUT port. Motors stay on the Hiwonder 11.1 V 6000 mAh pack (separate charger).
 - USB webcam "Full HD webcam" on `/dev/video0`; MJPG up to 1920x1080@30.
   Auto exposure/focus/white balance are on by default (must be locked for surveys).
 
@@ -79,7 +84,7 @@ other pictures if needed
 9. Evaluation tools: ground-truth format, replay, precision/recall, MAPE, CV.
 10. Some form of Field UI
 
-## Status (2026-11-20)
+## Status (2026-11-22)
 
 - **Now:** diagnosing encoders. Next test: wire one encoder (VCC->5V, GND,
   A->D2, B->D3) straight to the Uno and count pulses in firmware. If it
@@ -87,9 +92,10 @@ other pictures if needed
   encoders itself; if not, the encoders are dead.
 - **Works:** timed open-loop driving (`rover_cli.py run`), watchdog, Pi<->Uno link.
 - **Blocked:** distance/angle moves and calibration (need encoders).
-- **When the PiPower 5 arrives:** verify under load that `vcgencmd get_throttled`
-  stays 0x0, the Pi keeps running when the Anker is plugged in, and battery %
-  rises while running (if any fails, return it; fallback is Geekworm X1202).
-  Then add battery monitoring (Pi % + motor pack voltage) and survey guards:
-  refuse to start / stop and save when low. Needs a Pi 5 Active Cooler and a
-  mount on the chassis (it sits on top of the Pi).
+- **PiPower 5 installed (2026-11-22):** power side passes. Under 4-core
+  stress on the 96 W charger: no undervoltage, source stays external, battery
+  charges. Not yet tested with the Anker. **Cooling fails:** the SoC hit 84 °C
+  after 2 min of stress (soft throttle) despite a fan; the HAT on top likely
+  blocks airflow. Fix the cooling, then re-run the 10-min stress test. Still to do:
+  battery monitoring (Pi % + motor pack voltage) and survey guards (refuse to
+  start / stop and save when low), and a chassis mount for the Pi + HAT.
