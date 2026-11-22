@@ -18,6 +18,9 @@ other pictures if needed
 - Never set `closed_loop = true` while encoders are broken: the driver then
   runs both motors at full power regardless of channel.
 - Update **Status** below in the same commit as the work it describes.
+- If a tool or workflow default gets in the way of the work (slow, indirect,
+  pointless here), say so plainly and propose the better way; don't silently
+  work around the user. The user's explicit choices override those defaults.
 - Logbook: `docs/LOG.md` is the append-only history (one dated entry per work
   session: done, measured, failed, decided). Add an entry with each work
   commit. Keep this file to current state; history goes in the log.
@@ -55,9 +58,10 @@ other pictures if needed
 - `tools/flash.sh` uploads `firmware/dunebroom_motor` (serial protocol is
   documented at the top of the sketch). `tools/rover_cli.py` and
   `tools/diag_*.py` test motion.
-- Laptop agents reach the Pi via T3 linked environment
-  `7f7b1199-3089-4593-bf7a-705316869cf1` (delegate_task to its "No project"
-  scratch project). The user watches motor tests in person and reports what moved.
+- Laptop agents reach the Pi by SSH: `ssh dunebroom` (laptop `~/.ssh/config`,
+  key `~/.ssh/dunebroom_pi`, host `neev-rpi5-green.local`). The user chose SSH
+  over the T3 linked environment (`7f7b1199-3089-4593-bf7a-705316869cf1`),
+  which remains a fallback. The user watches motor tests in person and reports what moved.
 - Track wiring and calibration live in `config/rover.toml`; recalibrating
   never needs a reflash (firmware works in encoder ticks).
 
