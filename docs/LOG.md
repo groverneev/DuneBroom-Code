@@ -123,3 +123,21 @@ Time: ~6 h (estimate).
 **Next**
 - Tap the live signal wire of each motor cable to the Uno (left → D2,
   right → D3) while the cable stays in the driver; firmware counts it.
+
+## 2026-11-22 — Uno encoder counting works (firmware v4)
+
+**Done**
+- Tapped the live encoder wire of each motor cable (4th from the top at the
+  driver plug on both M4 and M3) to the Uno: left -> D2, right -> D3. Cables
+  stay in the driver. Verified with `encoder_test`: left track only moves D2,
+  right only D3.
+- Firmware v4: Uno interrupt-counts every edge on D2/D3, direction from the
+  last commanded sign per track; open-loop MIN_SPEED raised to 50 %.
+
+**Measured**
+- Tracks lifted, `rover_cli.py drive --ticks 2000 --speed 70`:
+  `TARGET left=1997 right=2017`; both tracks forward ~2 s, stopped on their own.
+- Opening the serial port resets the Uno, so counts restart per session.
+
+**Next**
+- Floor calibration: ticks_per_mm (drive + tape measure), then ticks_per_degree.

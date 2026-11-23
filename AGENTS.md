@@ -96,11 +96,11 @@ other pictures if needed
 
 ## Status (2026-11-22)
 
-- **Now:** encoder workaround. Tap each motor's live encoder wire to the Uno
-  (left B -> D2, right A -> D3) with the cable still in the driver; firmware
-  counts single-channel edges, direction from commanded sign, own speed loop.
-- **Works:** timed open-loop driving (`rover_cli.py run`), watchdog, Pi<->Uno link.
-- **Blocked:** distance/angle moves and calibration (need encoders).
+- **Now:** floor calibration of ticks_per_mm and ticks_per_degree.
+- **Works:** encoder-counted moves (firmware v4: Uno counts the live channel
+  of each motor on D2/D3; `drive --ticks` reached target 1997/2017 on lifted
+  tracks), timed open-loop driving, watchdog, Pi<->Uno link.
+- **Blocked:** nothing on motion; mm/deg moves wait for calibration.
 - **PiPower 5 installed (2026-11-22):** power side passes. Under 4-core
   stress on the 96 W charger: no undervoltage, source stays external, battery
   charges. Not yet tested with the Anker. **Cooling fails:** the SoC hit 84 °C
