@@ -1,6 +1,13 @@
 // DuneBroom v2 motor controller firmware.
 // Arduino Uno R3 + 4-channel I2C encoder motor driver (address 0x34).
 //
+// Encoders: each motor has one working encoder channel (the other is stuck
+// low, so the driver's quadrature counts read 0). The live wire of each
+// motor cable is tapped to the Uno: left -> D2, right -> D3. The Uno counts
+// every edge (~990 per output-shaft turn) and takes the direction from the
+// last commanded sign of that track. Track ticks (E, D, R, DONE) come from
+// these Uno counters; X still shows the driver's own (useless) counts.
+//
 // The Pi sends newline-terminated commands at 115200 baud. Distances are in
 // encoder ticks: the Pi converts mm and degrees with its calibration config,
 // so recalibrating never requires reflashing.
@@ -27,7 +34,8 @@
 //   WR <reg> <b0> [b1 b2 b3]         OK WR    write raw bytes to the driver
 //
 // Speeds are PWM duty % in open-loop mode, or the driver's speed units in
-// closed-loop mode (-100..100). D and R need working encoders.
+// closed-loop mode (-100..100). D and R slow to MIN_SPEED near the target;
+// open-loop PWM below ~40% does not move the tracks.
 // DONE reports ticks travelled by each track since the move began.
 // DONE reasons: TARGET, STOP, WATCHDOG (no command for WATCHDOG_MS), STALL
 // (tracks stopped turning), I2C (driver not answering).
@@ -38,7 +46,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#define FW_VERSION "3"
+#define FW_VERSION "4"
 
 const uint8_t DRV_ADDR = 0x34;
 const uint8_t REG_BATTERY = 0x00;
@@ -58,7 +66,9 @@ const long STALL_TICKS = 5;
 const long SLOW_TICKS = 400;          // decelerate over the last SLOW_TICKS of a move
 const long KP_DIV = 8;                // straightness: 1 speed unit per KP_DIV ticks of left/right mismatch
 const long MAX_CORR = 20;
-const int MIN_SPEED = 12;
+const int MIN_SPEED = 50;              // open-loop PWM %: ~30 doesn't move, 60 is slow
+const uint8_t ENC_PIN_LEFT = 2;
+const uint8_t ENC_PIN_RIGHT = 3;
 const int MAX_SPEED = 100;
 const int DEFAULT_SPEED = 50;
 
@@ -75,6 +85,13 @@ int cruiseSpeed = 0;
 long startL = 0, startR = 0;
 unsigned long moveStartMs = 0, lastCmdMs = 0, lastControlMs = 0, stallRefMs = 0;
 long stallRefTicks = 0;
+
+// Uno-side encoder counts (track ticks, forward-positive).
+volatile long encL = 0, encR = 0;
+volatile int8_t encDirL = 1, encDirR = 1;  // last commanded direction of each track
+
+void isrLeft() { encL += encDirL; }
+void isrRight() { encR += encDirR; }
 
 char lineBuf[48];
 uint8_t lineLen = 0;
@@ -109,10 +126,10 @@ bool readRawEncoders(long raw[4]) {
 }
 
 bool readSides(long &l, long &r) {
-  long raw[4];
-  if (!readRawEncoders(raw)) return false;
-  l = raw[leftCh] * leftSign;
-  r = raw[rightCh] * rightSign;
+  noInterrupts();
+  l = encL;
+  r = encR;
+  interrupts();
   return true;
 }
 
@@ -123,6 +140,9 @@ bool writeSpeeds(const int8_t s[4]) {
 }
 
 bool setSides(long l, long r) {
+  // A coasting track keeps the direction it was last driven in.
+  if (l != 0) encDirL = l > 0 ? 1 : -1;
+  if (r != 0) encDirR = r > 0 ? 1 : -1;
   int8_t s[4] = {0, 0, 0, 0};
   s[leftCh] = clampSpeed(l) * leftSign;
   s[rightCh] = clampSpeed(r) * rightSign;
@@ -381,6 +401,10 @@ void setup() {
   const uint8_t polarity = 0;
   writeReg(REG_ENC_POLARITY, &polarity, 1);
   stopMotors();
+  pinMode(ENC_PIN_LEFT, INPUT_PULLUP);
+  pinMode(ENC_PIN_RIGHT, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(ENC_PIN_LEFT), isrLeft, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ENC_PIN_RIGHT), isrRight, CHANGE);
   Serial.println(F("READY dunebroom_motor " FW_VERSION));
 }
 
