@@ -53,7 +53,8 @@ other pictures if needed
   `pipower5.service` enabled, safe shutdown at 10 %; dashboard on :34001.
   I2C was enabled with raspi-config. Long days: Anker Nano power bank on the
   INPUT port. Motors stay on the Hiwonder 11.1 V 6000 mAh pack (separate charger).
-- USB webcam "Full HD webcam" on `/dev/video0`; MJPG up to 1920x1080@30.
+- Camera replaced 2026-11-22 with a better one: model/settings not yet
+  recorded; re-probe it. Old entry: USB webcam "Full HD webcam" on `/dev/video0`; MJPG up to 1920x1080@30.
   Auto exposure/focus/white balance are on by default (must be locked for surveys).
 
 ## Working on the robot

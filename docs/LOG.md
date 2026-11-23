@@ -147,3 +147,12 @@ Time: ~1 h (estimate).
 
 **Next**
 - Floor calibration: ticks_per_mm (drive + tape measure), then ticks_per_degree.
+
+## 2026-11-22 — Camera replacement and battery fixes (user, hands-on)
+
+Time: ~3 h (user's estimate).
+
+**Done**
+- Replaced the robot's camera with a better one (model and mounting not yet
+  recorded; the camera entry in `AGENTS.md` may be out of date).
+- Hardware work fixing the robot's battery issues alongside the PiPower 5 install.
