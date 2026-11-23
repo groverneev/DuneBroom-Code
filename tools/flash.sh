@@ -4,6 +4,7 @@
 # Uploading resets the Arduino; keep the tracks off the ground.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+export PATH="$HOME/.local/bin:$PATH"  # arduino-cli lives here; non-login SSH lacks it
 
 PORT="${1:-$(ls /dev/serial/by-id/*Arduino* 2>/dev/null | head -n1)}"
 PORT="${PORT:-/dev/ttyACM0}"
