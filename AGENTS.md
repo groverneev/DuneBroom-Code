@@ -35,10 +35,13 @@ other pictures if needed
   4-ch encoder motor driver V1.4 at 0x34. Battery ~12.5 V.
 - Two JGB37-3865-520 motors (45:1, 12 V, 150 RPM) with encoder boards.
   **Right track = M3 (ch 2), left track = M4 (ch 3)**, positive = forward.
-- **Encoders return zero counts** (motors running or turned by hand) though the
-  encoder boards are lit and cables are seated. In encoder motor type the
-  driver ignores PWM, and speed mode on any channel spins both motors flat out.
-  Firmware therefore runs open-loop PWM: ~30% doesn't move the tracks, 60% is slow.
+- **Encoders: one channel per motor is stuck low** (bench test 2026-11-22):
+  left A dead / B live, right B dead / A live; LEDs on. The driver's
+  quadrature decode therefore reads 0. In encoder motor type the driver
+  ignores PWM, and speed mode on any channel spins both motors flat out.
+  Firmware runs open-loop PWM: ~30% doesn't move the tracks, 60% is slow.
+  Driver ports M3/M4 have mirrored pin labels: M4 = M+ VCC A B GND M- top to
+  bottom, M3 the reverse. Count plug holes from the M+ end.
 - Pi power: SunFounder PiPower 5 UPS HAT (I2C 0x5c, fw 2.0.9) on the GPIO
   header, 7.4 V 2000 mAh pack. Charge via the HAT's USB-C **INPUT** port (PD,
   negotiates 15 V), never the Pi's own USB-C. CHARGE SEL DIP both ON = 20 W
@@ -93,10 +96,9 @@ other pictures if needed
 
 ## Status (2026-11-22)
 
-- **Now:** diagnosing encoders. Next test: wire one encoder (VCC->5V, GND,
-  A->D2, B->D3) straight to the Uno and count pulses in firmware. If it
-  counts, the driver board's encoder inputs are at fault and the Uno counts
-  encoders itself; if not, the encoders are dead.
+- **Now:** encoder workaround. Tap each motor's live encoder wire to the Uno
+  (left B -> D2, right A -> D3) with the cable still in the driver; firmware
+  counts single-channel edges, direction from commanded sign, own speed loop.
 - **Works:** timed open-loop driving (`rover_cli.py run`), watchdog, Pi<->Uno link.
 - **Blocked:** distance/angle moves and calibration (need encoders).
 - **PiPower 5 installed (2026-11-22):** power side passes. Under 4-core

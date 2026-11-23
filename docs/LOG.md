@@ -91,3 +91,35 @@ Time: ~6 h (estimate).
 - Encoder test: one encoder wired straight to the Uno (VCC→5V, GND, A→D2,
   B→D3), count pulses in firmware.
 - Install and test the PiPower 5.
+
+## 2026-11-22 — Encoder bench test: one channel per motor is stuck low
+
+**Done**
+- Switched laptop→Pi access to SSH (`ssh dunebroom`, key auth); T3 link is fallback.
+- Added `firmware/encoder_test` (interrupt quadrature counter on D2/D3,
+  prints edges per channel) and `tools/encoder_watch.py`. `flash.sh` takes
+  `SKETCH=...` and finds arduino-cli over non-login SSH.
+- Wired each encoder straight to the Uno (driver bypassed, motor pack off),
+  turned the track by hand. Reflashed `dunebroom_motor` afterwards.
+
+**Measured**
+- Left motor (M4 cable): B pulses (~18.5k edges in 90 s); A held at 0 with
+  the Uno pull-up on. Swapping the D2/D3 jumpers moved the fault with the
+  wire (Uno pins fine). New jumper: same.
+- Right motor (M3 cable): A pulses (~3.2k edges in 30 s); B held at 0.
+- M3's port labels run mirrored to M4's (M+ at the bottom). Counting plug
+  holes from the top on M3 reverse-powered the right encoder briefly; it
+  survived (LED on, A pulses).
+- Encoder LED is on the motor's encoder board; labels there are hidden.
+- One stuck channel explains the driver's zero counts: quadrature decode
+  turns each edge of the live channel into +1 then -1.
+
+**Decided**
+- Workaround: the Uno counts the live channel of each motor itself
+  (single-channel, direction from the commanded sign). Distance/turn
+  resolution ~990 edges per output-shaft turn is ample; sand slip and image
+  ground-shift matter more. Replacement 2-channel encoder motors optional.
+
+**Next**
+- Tap the live signal wire of each motor cable to the Uno (left → D2,
+  right → D3) while the cable stays in the driver; firmware counts it.
