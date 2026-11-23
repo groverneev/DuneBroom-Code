@@ -1,16 +1,8 @@
 # DuneBroom logbook
 
-One short entry per day, newest at the bottom: approximate hours, then a few
+One short entry per day, newest at the top: approximate hours, then a few
 high-level bullets on what was done, found and decided. Details live in
 commits and `AGENTS.md`.
-
-## 2026-11-21 — ~6 h
-
-- Refocused the project on v2 (beach trash-density survey rover); deleted v1.
-- Set the plan: roadmap, survey decisions, `AGENTS.md` as shared context.
-- Wrote new motor firmware and Pi control software; linked the Pi for remote work.
-- Mapped the motors; found the encoders read zero, so switched to timed driving.
-- Pi kept browning out: ordered the SunFounder PiPower 5 battery HAT.
 
 ## 2026-11-22 — ~8 h
 
@@ -22,3 +14,11 @@ commits and `AGENTS.md`.
   Workaround: wired each motor's working signal to the Arduino, which now
   counts it (firmware v4). First encoder-measured drive hit its target.
 - Next: floor calibration (distance and turn), Pi cooling.
+
+## 2026-11-21 — ~6 h
+
+- Refocused the project on v2 (beach trash-density survey rover); deleted v1.
+- Set the plan: roadmap, survey decisions, `AGENTS.md` as shared context.
+- Wrote new motor firmware and Pi control software; linked the Pi for remote work.
+- Mapped the motors; found the encoders read zero, so switched to timed driving.
+- Pi kept browning out: ordered the SunFounder PiPower 5 battery HAT.

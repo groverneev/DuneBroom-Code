@@ -21,7 +21,7 @@ other pictures if needed
 - If a tool or workflow default gets in the way of the work (slow, indirect,
   pointless here), say so plainly and propose the better way; don't silently
   work around the user. The user's explicit choices override those defaults.
-- Logbook: `docs/LOG.md`, one short entry per day (`## date — ~N h`, then a
+- Logbook: `docs/LOG.md`, one short entry per day, newest at the top (`## date — ~N h`, then a
   few high-level bullets). Update it with each day's work; no details there.
   Keep this file to current state.
 
