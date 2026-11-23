@@ -82,7 +82,7 @@ other pictures if needed
 
 ## Rough Roadmap
 
-1. Motion: accurate drive/turn by distance (blocked on encoders).
+1. Motion: accurate drive/turn by distance (encoders work via the Uno; needs calibration).
 2. Capture: locked camera settings, frames saved with timestamps + odometry.
 3. Camera calibration: px/cm, footprint, lens distortion -> config.
 4. Dry-run lanes without ML; check coverage/area; these frames become training data.
