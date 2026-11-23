@@ -1,10 +1,12 @@
 # DuneBroom logbook
 
-Append-only, newest entry at the bottom. One dated entry per work session:
-what was done, what was measured, what failed, what was decided. Never edit
+Append-only, newest entry at the bottom. One dated entry per work session,
+with an approximate time spent (`Time: ~N h`): what was done, what was measured, what failed, what was decided. Never edit
 old entries; correct them in a new one. Current state lives in `AGENTS.md`.
 
 ## 2026-11-22 — PiPower 5 UPS HAT installed
+
+Time: ~2.5 h (estimate).
 
 **Done**
 - Mounted the SunFounder PiPower 5 HAT on the Pi 5 with its 7.4 V 2000 mAh pack.
@@ -94,6 +96,8 @@ Time: ~6 h (estimate).
 
 ## 2026-11-22 — Encoder bench test: one channel per motor is stuck low
 
+Time: ~1.5 h (estimate).
+
 **Done**
 - Switched laptop→Pi access to SSH (`ssh dunebroom`, key auth); T3 link is fallback.
 - Added `firmware/encoder_test` (interrupt quadrature counter on D2/D3,
@@ -125,6 +129,8 @@ Time: ~6 h (estimate).
   right → D3) while the cable stays in the driver; firmware counts it.
 
 ## 2026-11-22 — Uno encoder counting works (firmware v4)
+
+Time: ~1 h (estimate).
 
 **Done**
 - Tapped the live encoder wire of each motor cable (4th from the top at the

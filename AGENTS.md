@@ -22,7 +22,8 @@ other pictures if needed
   pointless here), say so plainly and propose the better way; don't silently
   work around the user. The user's explicit choices override those defaults.
 - Logbook: `docs/LOG.md` is the append-only history (one dated entry per work
-  session: done, measured, failed, decided). Add an entry with each work
+  session: approximate hours `Time: ~N h`, then done, measured, failed,
+  decided). Add an entry with each work
   commit. Keep this file to current state; history goes in the log.
 
 ## Hardware (measured)
