@@ -12,7 +12,7 @@ commits and `AGENTS.md`.
 - Mapped the motors; found the encoders read zero, so switched to timed driving.
 - Pi kept browning out: ordered the SunFounder PiPower 5 battery HAT.
 
-## 2026-11-22 — ~11 h
+## 2026-11-22 — ~8 h
 
 - Installed the PiPower 5: Pi now runs and charges reliably under load.
   Cooling still inadequate (84 °C under stress).
