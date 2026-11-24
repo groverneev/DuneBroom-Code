@@ -23,7 +23,9 @@ drive_speed = 70
 turn_speed = 70
 
 [calibration]
-# Encoder ticks per mm driven and per degree turned, measured on sand.
+# Encoder ticks per mm driven and per degree turned.
 # 0 means not calibrated yet (drive_mm / turn_deg refuse to run).
-ticks_per_mm = 0.0
+# ticks_per_mm: 2026-11-24 on a hard floor, speed 70: 5002 ticks = 933.5 mm,
+# straight; reversing 5010 ticks returned to the start. Recheck on sand.
+ticks_per_mm = 5.36
 ticks_per_degree = 0.0

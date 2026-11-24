@@ -95,13 +95,16 @@ other pictures if needed
 9. Evaluation tools: ground-truth format, replay, precision/recall, MAPE, CV.
 10. Some form of Field UI
 
-## Status (2026-11-22)
+## Status (2026-11-24)
 
-- **Now:** floor calibration of ticks_per_mm and ticks_per_degree.
+- **Now:** turn calibration (ticks_per_degree). ticks_per_mm = 5.36 measured
+  on a hard floor (933.5 mm, straight, repeatable); recheck on sand later.
+- **Watch:** the right motor (M3) went silent on the first floor run and came
+  back after re-seating; suspect a loose motor wire or plug.
 - **Works:** encoder-counted moves (firmware v4: Uno counts the live channel
   of each motor on D2/D3; `drive --ticks` reached target 1997/2017 on lifted
   tracks), timed open-loop driving, watchdog, Pi<->Uno link.
-- **Blocked:** nothing on motion; mm/deg moves wait for calibration.
+- **Blocked:** nothing on motion; degree turns wait for calibration.
 - **PiPower 5 installed (2026-11-22):** power side passes. Under 4-core
   stress on the 96 W charger: no undervoltage, source stays external, battery
   charges. Not yet tested with the Anker. **Cooling fails:** the SoC hit 84 °C
