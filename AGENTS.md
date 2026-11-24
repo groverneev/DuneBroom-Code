@@ -97,14 +97,15 @@ other pictures if needed
 
 ## Status (2026-11-24)
 
-- **Now:** turn calibration (ticks_per_degree). ticks_per_mm = 5.36 measured
-  on a hard floor (933.5 mm, straight, repeatable); recheck on sand later.
+- **Now:** motion calibrated on hardwood: ticks_per_mm = 5.36 (933.5 mm,
+  straight, repeatable), ticks_per_degree = 7.75 (360 deg spin lined up).
+  Recheck both on sand. Next: roadmap step 2 (camera capture).
 - **Watch:** the right motor (M3) went silent on the first floor run and came
   back after re-seating; suspect a loose motor wire or plug.
-- **Works:** encoder-counted moves (firmware v4: Uno counts the live channel
+- **Works:** `drive --mm` / `turn --deg`, encoder-counted moves (firmware v4: Uno counts the live channel
   of each motor on D2/D3; `drive --ticks` reached target 1997/2017 on lifted
   tracks), timed open-loop driving, watchdog, Pi<->Uno link.
-- **Blocked:** nothing on motion; degree turns wait for calibration.
+- **Blocked:** nothing.
 - **PiPower 5 installed (2026-11-22):** power side passes. Under 4-core
   stress on the 96 W charger: no undervoltage, source stays external, battery
   charges. Not yet tested with the Anker. **Cooling fails:** the SoC hit 84 °C

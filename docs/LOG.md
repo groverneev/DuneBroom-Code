@@ -4,6 +4,12 @@ One short entry per day, newest at the top: approximate hours, then a few
 high-level bullets on what was done, found and decided. Details live in
 commits and `AGENTS.md`.
 
+## 2026-11-24 — ~1.5 h
+
+- Calibrated driving on hardwood: distance (5.36 counts/mm) and turning
+  (7.75 counts/degree), both checked with a repeat run. Needs redoing on sand.
+- Right motor briefly lost power; came back after re-seating its plug.
+
 ## 2026-11-22 — ~8 h
 
 - Installed the PiPower 5: Pi now runs and charges reliably under load.
