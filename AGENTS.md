@@ -98,8 +98,9 @@ other pictures if needed
 ## Status (2026-11-24)
 
 - **Now:** motion calibrated on hardwood: ticks_per_mm = 5.36 (933.5 mm,
-  straight, repeatable), ticks_per_degree = 7.75 (360 deg spin lined up).
-  Recheck both on sand. Next: roadmap step 2 (camera capture).
+  straight, repeatable). Turns = 7.38 ticks/deg + 134 ticks fixed loss
+  (fit from 78/360/390 deg spins); verifying 90 deg. Recheck both on sand.
+  Next: roadmap step 2 (camera capture).
 - **Watch:** the right motor (M3) went silent on the first floor run and came
   back after re-seating; suspect a loose motor wire or plug.
 - **Works:** `drive --mm` / `turn --deg`, encoder-counted moves (firmware v4: Uno counts the live channel

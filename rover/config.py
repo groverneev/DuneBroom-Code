@@ -23,6 +23,7 @@ class RoverConfig:
     turn_speed: int
     ticks_per_mm: float | None
     ticks_per_degree: float | None
+    turn_offset_ticks: float
 
 
 def resolve_port(port: str) -> str:
@@ -48,4 +49,5 @@ def load_config(path: str | Path = DEFAULT_CONFIG_PATH) -> RoverConfig:
         turn_speed=int(motors["turn_speed"]),
         ticks_per_mm=float(cal["ticks_per_mm"]) or None,
         ticks_per_degree=float(cal["ticks_per_degree"]) or None,
+        turn_offset_ticks=float(cal.get("turn_offset_ticks", 0.0)),
     )

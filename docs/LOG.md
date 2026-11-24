@@ -7,7 +7,8 @@ commits and `AGENTS.md`.
 ## 2026-11-24 — ~1.5 h
 
 - Calibrated driving on hardwood: distance (5.36 counts/mm) and turning
-  (7.75 counts/degree), both checked with a repeat run. Needs redoing on sand.
+  (about 7.4 counts/degree plus a fixed loss per turn, since small turns came
+  up short). Needs redoing on sand.
 - Right motor briefly lost power; came back after re-seating its plug.
 
 ## 2026-11-22 — ~8 h

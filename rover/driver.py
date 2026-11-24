@@ -128,7 +128,11 @@ class Rover:
         """Positive degrees turn clockwise (to the right) seen from above."""
         if not self.config.ticks_per_degree:
             raise RoverError("ticks_per_degree is not calibrated in config/rover.toml")
-        return self.rotate_ticks(round(degrees * self.config.ticks_per_degree), speed, timeout)
+        if degrees == 0:
+            raise RoverError("turn of 0 degrees")
+        # Each turn loses a fixed number of ticks before the chassis rotates.
+        ticks = abs(degrees) * self.config.ticks_per_degree + self.config.turn_offset_ticks
+        return self.rotate_ticks(round(ticks if degrees > 0 else -ticks), speed, timeout)
 
     def set_speeds(self, left: int, right: int) -> None:
         """Run the tracks continuously until changed or stop() (teleop)."""
