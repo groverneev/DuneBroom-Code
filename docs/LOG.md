@@ -4,13 +4,16 @@ One short entry per day, newest at the top: approximate hours, then a few
 high-level bullets on what was done, found and decided. Details live in
 commits and `AGENTS.md`.
 
-## 2026-11-25 — ~1.5 h
+## 2026-11-25 — ~2.5 h
 
 - Turn tests: skid turns vary ~10% run to run, so turning by encoder counts
   alone isn't accurate enough. Ordered a gyro (Adafruit BNO055).
 - A lost stop command left the robot driving after a move; firmware now
   retries stops and keeps re-sending them while idle. Cause: loose wiring.
 - Ordered the Pi 5 Active Cooler for the overheating.
+- Camera (Logitech C920): settings now lock for consistent photos; frames
+  are saved with timestamps and track position.
+- Added battery checks that will stop a survey before either battery runs low.
 
 ## 2026-11-24 — ~1.5 h
 

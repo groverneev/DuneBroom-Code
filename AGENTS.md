@@ -52,13 +52,18 @@ other pictures if needed
   `pipower5.service` enabled, safe shutdown at 10 %; dashboard on :34001.
   I2C was enabled with raspi-config. Long days: Anker Nano power bank on the
   INPUT port. Motors stay on the Hiwonder 11.1 V 6000 mAh pack (separate charger).
-- Camera replaced 2026-11-22 with a better one: model/settings not yet
-  recorded; re-probe it. Old entry: USB webcam "Full HD webcam" on `/dev/video0`; MJPG up to 1920x1080@30.
-  Auto exposure/focus/white balance are on by default (must be locked for surveys).
+- Camera: Logitech C920 PRO (USB, `/dev/v4l/by-id/usb-046d_HD_Pro_Webcam_C920_*-index0`),
+  pointing down. MJPG up to 1920x1080@30. Has manual exposure (100 us units),
+  gain, focus 0-250 (~45 at current height), white balance 2000-6500 K.
+  `rover/camera.py` locks them (auto settles, then frozen; exposure capped by
+  `[camera] exposure_max`). OpenCV 4.10 (python3-opencv) installed on the Pi.
 
 ## Working on the robot
 
 - Code is written on the laptop, pushed to `main`, then `git pull` on the Pi.
+- `tools/capture.py` saves locked frames + odometry to `data/captures/`
+  (gitignored); `tools/power.py` shows both batteries; `tools/diag_i2c_wiggle.py`
+  hunts loose Uno-driver wires.
 - `tools/flash.sh` uploads `firmware/dunebroom_motor` (serial protocol is
   documented at the top of the sketch). `tools/rover_cli.py` and
   `tools/diag_*.py` test motion.
@@ -112,12 +117,16 @@ other pictures if needed
 - **Works:** `drive --mm` / `turn --deg`, encoder-counted moves (firmware v4: Uno counts the live channel
   of each motor on D2/D3; `drive --ticks` reached target 1997/2017 on lifted
   tracks), timed open-loop driving, watchdog, Pi<->Uno link.
+- **Capture (roadmap 2) started 2026-11-25:** camera locking and frame
+  capture with odometry work (5 fps, 1080p). Indoors the 8 ms exposure cap
+  forces max gain (noisy); check frames in daylight. Not yet run while driving.
+- **Power guards:** `rover/power.py` reads Pi % and motor pack V; PowerGuard
+  is ready for the survey runner (start >= 30 % / 11.1 V, stop < 15 % / 10.5 V).
 - **Blocked:** nothing.
 - **PiPower 5 installed (2026-11-22):** power side passes. Under 4-core
   stress on the 96 W charger: no undervoltage, source stays external, battery
   charges. Not yet tested with the Anker. **Cooling fails:** the SoC hit 84 °C
   after 2 min of stress (soft throttle) despite a fan; the HAT on top likely
   blocks airflow. Official Pi 5 Active Cooler ordered 2026-11-25; needs
-  ~12 mm under the HAT. Fit it, then re-run the 10-min stress test. Still to do:
-  battery monitoring (Pi % + motor pack voltage) and survey guards (refuse to
-  start / stop and save when low), and a chassis mount for the Pi + HAT.
+  ~12 mm under the HAT. Fit it, then re-run the 10-min stress test. Still to
+  do: a chassis mount for the Pi + HAT.
