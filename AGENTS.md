@@ -121,7 +121,8 @@ other pictures if needed
   capture with odometry work (5 fps, 1080p). Indoors the 8 ms exposure cap
   forces max gain (noisy); check frames in daylight. Not yet run while driving.
 - **Power guards:** `rover/power.py` reads Pi % and motor pack V; PowerGuard
-  is ready for the survey runner (start >= 30 % / 11.1 V, stop < 15 % / 10.5 V).
+  is ready for the survey runner: one minimum per battery (Pi 12 %, motor
+  10.5 V) for both starting and stopping.
 - **Blocked:** nothing.
 - **PiPower 5 installed (2026-11-22):** power side passes. Under 4-core
   stress on the 96 W charger: no undervoltage, source stays external, battery

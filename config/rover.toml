@@ -52,11 +52,10 @@ focus = -1
 jpeg_quality = 90
 
 [power]
-# Survey guards (rover/power.py). Pi pack %: pipower5 shuts the Pi down at
-# 10 %, so stop well before that (ignored while the charger is plugged in).
-pi_start_percent = 30
-pi_stop_percent = 15
-# Motor pack, 3S Li-ion (12.6 V full, ~9.9 V empty). Stop needs two low
-# readings 5 s apart because voltage sags while driving.
-motor_start_mv = 11100
-motor_stop_mv = 10500
+# Survey guard (rover/power.py): below these a survey won't start, or stops
+# and saves. Pi pack %: pipower5 hard-shuts the Pi at 10 %, so stop just
+# before (ignored while the charger is plugged in).
+pi_min_percent = 12
+# Motor pack, 3S Li-ion (12.6 V full, ~9.9 V empty): 10.5 V protects the
+# cells. Needs two low readings 5 s apart (voltage sags while driving).
+motor_min_mv = 10500

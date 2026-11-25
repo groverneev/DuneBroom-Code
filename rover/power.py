@@ -3,8 +3,8 @@
 Pi pack: read through the `pipower5` CLI (its own service owns the HAT and
 shuts the Pi down at 10 %). Motor pack (3S Li-ion, 11.1 V nominal): voltage
 from the motor driver via the Uno. Thresholds live in config/rover.toml
-[power]. A survey should refuse to start below `*_start` and stop and save
-below `*_stop`; PowerGuard polls in the background and sets `.low`.
+[power]: one minimum per battery. A survey won't start below it, and
+PowerGuard (polling in the background) sets `.low` to stop and save.
 """
 
 from __future__ import annotations
@@ -21,10 +21,8 @@ from rover.config import DEFAULT_CONFIG_PATH
 
 @dataclass(frozen=True)
 class PowerLimits:
-    pi_start_percent: int
-    pi_stop_percent: int
-    motor_start_mv: int
-    motor_stop_mv: int
+    pi_min_percent: int
+    motor_min_mv: int
 
 
 @dataclass(frozen=True)
@@ -33,10 +31,9 @@ class PowerStatus:
     pi_plugged_in: bool | None
     motor_mv: int | None
 
-    def problems(self, limits: PowerLimits, starting: bool) -> list[str]:
+    def problems(self, limits: PowerLimits) -> list[str]:
         """Reasons not to (keep) driving; empty when fine. Unreadable = problem."""
-        pi_min = limits.pi_start_percent if starting else limits.pi_stop_percent
-        motor_min = limits.motor_start_mv if starting else limits.motor_stop_mv
+        pi_min, motor_min = limits.pi_min_percent, limits.motor_min_mv
         out = []
         if self.pi_percent is None:
             out.append("Pi battery unreadable")
@@ -53,10 +50,8 @@ def load_power_limits(path: str | Path = DEFAULT_CONFIG_PATH) -> PowerLimits:
     with open(path, "rb") as f:
         p = tomllib.load(f)["power"]
     return PowerLimits(
-        pi_start_percent=int(p["pi_start_percent"]),
-        pi_stop_percent=int(p["pi_stop_percent"]),
-        motor_start_mv=int(p["motor_start_mv"]),
-        motor_stop_mv=int(p["motor_stop_mv"]),
+        pi_min_percent=int(p["pi_min_percent"]),
+        motor_min_mv=int(p["motor_min_mv"]),
     )
 
 
@@ -84,7 +79,7 @@ def read_status(rover=None) -> PowerStatus:
 
 
 class PowerGuard:
-    """Polls every `period_s`; `.low` is set (with `.reasons`) on a stop-level reading."""
+    """Polls every `period_s`; `.low` is set (with `.reasons`) below a minimum."""
 
     def __init__(self, rover, limits: PowerLimits | None = None, period_s: float = 5.0):
         self.rover = rover
@@ -99,7 +94,7 @@ class PowerGuard:
     def check_start(self) -> list[str]:
         """Problems that should stop a survey from starting (empty = OK)."""
         self.last = read_status(self.rover)
-        return self.last.problems(self.limits, starting=True)
+        return self.last.problems(self.limits)
 
     def start(self) -> "PowerGuard":
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -115,7 +110,7 @@ class PowerGuard:
         misses = 0
         while not self._stop.wait(self.period_s):
             self.last = read_status(self.rover)
-            problems = self.last.problems(self.limits, starting=False)
+            problems = self.last.problems(self.limits)
             # Motor voltage sags under load: need two low readings in a row.
             misses = misses + 1 if problems else 0
             if misses >= 2:

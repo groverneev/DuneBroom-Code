@@ -28,7 +28,7 @@ def main() -> None:
     motor = "unknown" if status.motor_mv is None else f"{status.motor_mv / 1000:.2f} V"
     print(f"Pi battery:    {pi}{plug}")
     print(f"Motor battery: {motor}")
-    problems = status.problems(limits, starting=True)
+    problems = status.problems(limits)
     print("Survey start: OK" if not problems else "Survey start: NO - " + "; ".join(problems))
 
 
