@@ -95,13 +95,15 @@ other pictures if needed
 9. Evaluation tools: ground-truth format, replay, precision/recall, MAPE, CV.
 10. Some form of Field UI
 
-## Status (2026-11-24)
+## Status (2026-11-25)
 
 - **Now:** motion calibrated on hardwood: ticks_per_mm = 5.36 (933.5 mm,
   straight, repeatable). Turns: 7.54 ticks/deg, but skid turns scatter
   ~+-10% run to run (4 x 90 deg came out 450 deg). Encoder-only turning
-  isn't accurate enough for lane ends; proposed fix: add a gyro/IMU on the
-  Uno or Pi I2C and turn by heading. Recheck distance on sand.
+  isn't accurate enough for lane ends. Fix: Adafruit BNO055 IMU ordered
+  2026-11-25 (arrives ~11-29); plan to wire it to the Pi in UART mode (PS1
+  high) to avoid Pi I2C clock-stretching trouble, then turn by heading.
+  Recheck distance on sand.
 - **Watch: flaky I2C** between Uno and driver. 2026-11-25: `ERR I2C` at
   startup, then a lost stop left the robot driving forward after DONE TARGET
   until a new connection reset the Uno. Firmware v5 retries stops and
@@ -115,6 +117,7 @@ other pictures if needed
   stress on the 96 W charger: no undervoltage, source stays external, battery
   charges. Not yet tested with the Anker. **Cooling fails:** the SoC hit 84 °C
   after 2 min of stress (soft throttle) despite a fan; the HAT on top likely
-  blocks airflow. Fix the cooling, then re-run the 10-min stress test. Still to do:
+  blocks airflow. Official Pi 5 Active Cooler ordered 2026-11-25; needs
+  ~12 mm under the HAT. Fit it, then re-run the 10-min stress test. Still to do:
   battery monitoring (Pi % + motor pack voltage) and survey guards (refuse to
   start / stop and save when low), and a chassis mount for the Pi + HAT.
