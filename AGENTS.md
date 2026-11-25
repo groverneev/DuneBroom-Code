@@ -93,8 +93,10 @@ other pictures if needed
 3. Camera calibration: px/cm, footprint, lens distortion -> config.
 4. Dry-run lanes without ML; check coverage/area; these frames become training data.
 5. Ground shift via phase correlation; surveyed-area accumulation.
-6. Debris detector: an ML model trained on our own images (plus public data
-   if it helps), fast enough on the Pi; architecture not fixed.
+6. Debris detector: try zero-shot open-vocabulary models (SAM 3, Grounding
+   DINO, OWLv2...) first, measured on a small hand-labelled beach set. Train
+   a small model (pre-labelled by the zero-shot one) only if that falls short.
+   May run on the laptop if too slow for the Pi.
 7. Count each item once (new-ground strips + lane bands).
 8. Results: density, per-item CSV, detection map, summary JSON.
 9. Evaluation tools: ground-truth format, replay, precision/recall, MAPE, CV.
