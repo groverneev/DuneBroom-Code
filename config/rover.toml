@@ -28,9 +28,10 @@ turn_speed = 70
 # ticks_per_mm: 2026-11-24 on hardwood floor, speed 70: 5002 ticks = 933.5 mm,
 # straight; reversing 5010 ticks returned to the start. Recheck on sand.
 ticks_per_mm = 5.36
-# Turns: ticks = |deg| * ticks_per_degree + turn_offset_ticks. Each turn
-# loses a fixed number of ticks before the chassis starts rotating (track
-# slack / skid). Fit 2026-11-24 on hardwood, speed 70, spin in place:
-# 710 ticks ~ 78 deg, 2790 = 360 deg, 3008 ~ 390 deg. Recheck on sand.
-ticks_per_degree = 7.38
-turn_offset_ticks = 134
+# Turns: ticks = |deg| * ticks_per_degree + turn_offset_ticks.
+# Hardwood, speed 70, spin in place (angles by eye), 2026-11-24/25:
+# 710 ~ 78 deg, 808 ~ 100, 2790 = 360, 3008 ~ 390, 4 x 810 ~ 450.
+# Best fit through zero 7.54; runs scatter about +-10%, so a fixed offset
+# isn't supported. Skid turns aren't repeatable enough: plan a gyro.
+ticks_per_degree = 7.54
+turn_offset_ticks = 0

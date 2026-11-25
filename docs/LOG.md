@@ -7,8 +7,8 @@ commits and `AGENTS.md`.
 ## 2026-11-24 — ~1.5 h
 
 - Calibrated driving on hardwood: distance (5.36 counts/mm) and turning
-  (about 7.4 counts/degree plus a fixed loss per turn, since small turns came
-  up short). Needs redoing on sand.
+  (about 7.5 counts/degree). Turns vary ~10% run to run, so turning by
+  encoder counts alone isn't accurate enough; a gyro is the likely fix.
 - Right motor briefly lost power; came back after re-seating its plug.
 
 ## 2026-11-22 — ~8 h

@@ -98,9 +98,10 @@ other pictures if needed
 ## Status (2026-11-24)
 
 - **Now:** motion calibrated on hardwood: ticks_per_mm = 5.36 (933.5 mm,
-  straight, repeatable). Turns = 7.38 ticks/deg + 134 ticks fixed loss
-  (fit from 78/360/390 deg spins); verifying 90 deg. Recheck both on sand.
-  Next: roadmap step 2 (camera capture).
+  straight, repeatable). Turns: 7.54 ticks/deg, but skid turns scatter
+  ~+-10% run to run (4 x 90 deg came out 450 deg). Encoder-only turning
+  isn't accurate enough for lane ends; proposed fix: add a gyro/IMU on the
+  Uno or Pi I2C and turn by heading. Recheck distance on sand.
 - **Watch: flaky I2C** between Uno and driver. 2026-11-25: `ERR I2C` at
   startup, then a lost stop left the robot driving forward after DONE TARGET
   until a new connection reset the Uno. Firmware v5 retries stops and
