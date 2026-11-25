@@ -40,13 +40,19 @@
 // DONE reasons: TARGET, STOP, WATCHDOG (no command for WATCHDOG_MS), STALL
 // (tracks stopped turning), I2C (driver not answering).
 // Errors: ERR <code>.
+//
+// Stop safety: the driver keeps its last PWM until told otherwise, so a stop
+// lost to an I2C glitch leaves the motors running (seen 2026-11-25). Stops
+// are retried, and while IDLE the Uno re-sends zero speeds every
+// IDLE_STOP_MS, so a lost stop is fixed as soon as I2C answers again. This
+// also overrides any WR to the speed/PWM registers made while IDLE.
 
 #include <Wire.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
-#define FW_VERSION "4"
+#define FW_VERSION "5"
 
 const uint8_t DRV_ADDR = 0x34;
 const uint8_t REG_BATTERY = 0x00;
@@ -59,6 +65,8 @@ const uint8_t MOTOR_TYPE_NO_ENCODER = 0;
 const uint8_t MOTOR_TYPE_JGB37_520_12V_150RPM = 3;
 
 const unsigned long WATCHDOG_MS = 600;
+const unsigned long IDLE_STOP_MS = 100;
+const uint8_t STOP_TRIES = 5;
 const unsigned long CONTROL_MS = 20;
 const unsigned long RAMP_MS = 300;    // accelerate from MIN_SPEED to cruise over this long
 const unsigned long STALL_MS = 700;   // stop if progress < STALL_TICKS for this long
@@ -83,7 +91,7 @@ long targetTicks = 0;
 int8_t dirL = 1, dirR = 1;
 int cruiseSpeed = 0;
 long startL = 0, startR = 0;
-unsigned long moveStartMs = 0, lastCmdMs = 0, lastControlMs = 0, stallRefMs = 0;
+unsigned long moveStartMs = 0, lastCmdMs = 0, lastControlMs = 0, stallRefMs = 0, lastStopMs = 0;
 long stallRefTicks = 0;
 
 // Uno-side encoder counts (track ticks, forward-positive).
@@ -149,10 +157,24 @@ bool setSides(long l, long r) {
   return writeSpeeds(s);
 }
 
-bool stopMotors() {
+bool stopOnce() {
   const int8_t s[4] = {0, 0, 0, 0};
   bool pwmOk = writeReg(REG_PWM, (const uint8_t *)s, 4);
   return writeReg(REG_SPEED, (const uint8_t *)s, 4) && pwmOk;
+}
+
+bool stopMotors() {
+  lastStopMs = millis();
+  for (uint8_t i = 0; i < STOP_TRIES; i++) {
+    if (stopOnce()) return true;
+    delay(2);
+  }
+  return false;
+}
+
+void printErr(const __FlashStringHelper *code) {
+  Serial.print(F("ERR "));
+  Serial.println(code);
 }
 
 // ---- motion ----
@@ -168,7 +190,7 @@ char modeCode() {
 }
 
 void finishMove(const __FlashStringHelper *reason) {
-  stopMotors();
+  if (!stopMotors()) printErr(F("I2C STOP"));
   long l = startL, r = startR;
   readSides(l, r);
   Serial.print(F("DONE "));
@@ -219,11 +241,6 @@ void controlStep(unsigned long now) {
 }
 
 // ---- commands ----
-
-void printErr(const __FlashStringHelper *code) {
-  Serial.print(F("ERR "));
-  Serial.println(code);
-}
 
 void startTicksMove(Mode m, long ticks, long speed) {
   if (mode != IDLE) { printErr(F("BUSY")); return; }
@@ -415,6 +432,7 @@ void loop() {
     finishMove(F("WATCHDOG"));
     return;
   }
+  if (mode == IDLE && now - lastStopMs >= IDLE_STOP_MS) stopMotors();
   if ((mode == DRIVE || mode == ROTATE) && now - lastControlMs >= CONTROL_MS) {
     lastControlMs = now;
     controlStep(now);

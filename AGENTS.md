@@ -101,8 +101,11 @@ other pictures if needed
   straight, repeatable). Turns = 7.38 ticks/deg + 134 ticks fixed loss
   (fit from 78/360/390 deg spins); verifying 90 deg. Recheck both on sand.
   Next: roadmap step 2 (camera capture).
-- **Watch:** the right motor (M3) went silent on the first floor run and came
-  back after re-seating; suspect a loose motor wire or plug.
+- **Watch: flaky I2C** between Uno and driver. 2026-11-25: `ERR I2C` at
+  startup, then a lost stop left the robot driving forward after DONE TARGET
+  until a new connection reset the Uno. Firmware v5 retries stops and
+  re-sends stop every 100 ms while idle. Also likely explains the right motor
+  (M3) going silent on 2026-11-24. Re-seat/secure the SDA/SCL/GND wires.
 - **Works:** `drive --mm` / `turn --deg`, encoder-counted moves (firmware v4: Uno counts the live channel
   of each motor on D2/D3; `drive --ticks` reached target 1997/2017 on lifted
   tracks), timed open-loop driving, watchdog, Pi<->Uno link.
