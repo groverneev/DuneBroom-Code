@@ -35,3 +35,18 @@ ticks_per_mm = 5.36
 # isn't supported. Skid turns aren't repeatable enough: plan a gyro.
 ticks_per_degree = 7.54
 turn_offset_ticks = 0
+
+[camera]
+# Logitech C920 PRO, pointing down. by-id path survives USB re-plugging.
+device = "/dev/v4l/by-id/usb-046d_HD_Pro_Webcam_C920_05CD827F-video-index0"
+width = 1920
+height = 1080
+fps = 30
+# Auto exposure/focus/white balance run this long, then are frozen.
+settle_s = 3.0
+# Exposure cap in 100 us units. At drive speed 70 (~280 mm/s) 80 = 8 ms
+# = ~2 mm of smear. Indoors auto wants ~330, so frames come out dark/noisy.
+exposure_max = 80
+# -1 = use the autofocus value at lock time; else 0-250 (C920: 45 at ~floor).
+focus = -1
+jpeg_quality = 90
