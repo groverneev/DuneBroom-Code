@@ -41,6 +41,7 @@
 // (tracks stopped turning), I2C (driver not answering).
 // Errors: ERR <code>.
 //
+// Speed writes are retried WRITE_TRIES times before a move ends with I2C.
 // Stop safety: the driver keeps its last PWM until told otherwise, so a stop
 // lost to an I2C glitch leaves the motors running (seen 2026-11-25). Stops
 // are retried, and while IDLE the Uno re-sends zero speeds every
@@ -52,7 +53,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#define FW_VERSION "5"
+#define FW_VERSION "6"
 
 const uint8_t DRV_ADDR = 0x34;
 const uint8_t REG_BATTERY = 0x00;
@@ -143,8 +144,15 @@ bool readSides(long &l, long &r) {
 
 int clampSpeed(long s) { return (int)constrain(s, -MAX_SPEED, MAX_SPEED); }
 
+// Retried like stops: one I2C glitch shouldn't end a move.
+const uint8_t WRITE_TRIES = 3;
+
 bool writeSpeeds(const int8_t s[4]) {
-  return writeReg(closedLoop ? REG_SPEED : REG_PWM, (const uint8_t *)s, 4);
+  for (uint8_t i = 0; i < WRITE_TRIES; i++) {
+    if (writeReg(closedLoop ? REG_SPEED : REG_PWM, (const uint8_t *)s, 4)) return true;
+    delay(2);
+  }
+  return false;
 }
 
 bool setSides(long l, long r) {

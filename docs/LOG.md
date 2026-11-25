@@ -9,7 +9,8 @@ commits and `AGENTS.md`.
 - Turn tests: skid turns vary ~10% run to run, so turning by encoder counts
   alone isn't accurate enough. Ordered a gyro (Adafruit BNO055).
 - A lost stop command left the robot driving after a move; firmware now
-  retries stops and keeps re-sending them while idle. Cause: loose wiring.
+  retries stops and keeps re-sending them while idle. Traced the cause to a
+  loose SDA wire between the Arduino and the motor driver and rewired it.
 - Ordered the Pi 5 Active Cooler for the overheating.
 - Camera (Logitech C920): settings now lock for consistent photos; frames
   are saved with timestamps and track position.

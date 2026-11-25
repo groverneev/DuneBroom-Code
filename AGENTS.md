@@ -112,8 +112,9 @@ other pictures if needed
 - **Watch: flaky I2C** between Uno and driver. 2026-11-25: `ERR I2C` at
   startup, then a lost stop left the robot driving forward after DONE TARGET
   until a new connection reset the Uno. Firmware v5 retries stops and
-  re-sends stop every 100 ms while idle. Also likely explains the right motor
-  (M3) going silent on 2026-11-24. Re-seat/secure the SDA/SCL/GND wires.
+  re-sends stop every 100 ms while idle; v6 also retries speed writes.
+  Wiggle test (`tools/diag_i2c_wiggle.py`) traced it to the SDA wire
+  (SCL/GND clean); after rewiring SDA it passed. Glue/secure the I2C wires.
 - **Works:** `drive --mm` / `turn --deg`, encoder-counted moves (firmware v4: Uno counts the live channel
   of each motor on D2/D3; `drive --ticks` reached target 1997/2017 on lifted
   tracks), timed open-loop driving, watchdog, Pi<->Uno link.
