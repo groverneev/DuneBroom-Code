@@ -50,7 +50,9 @@ other pictures if needed
   (~2 h runtime from full). Buzzer beeps when input is unplugged (normal).
   `pipower5` CLI 1.2.3 (`-a` full status, `-bp` %, `-ichg`, `-ii`);
   `pipower5.service` enabled, safe shutdown at 10 %; dashboard on :34001.
-  I2C was enabled with raspi-config. Long days: Anker Nano power bank on the
+  I2C was enabled with raspi-config. `dtparam=uart0=on` (2026-11-26) gives
+  `/dev/ttyAMA0` on GPIO14/15 for the BNO055; serial0/console stay on the
+  debug port (ttyAMA10). Long days: Anker Nano power bank on the
   INPUT port. Motors stay on the Hiwonder 11.1 V 6000 mAh pack (separate charger).
 - Camera: Logitech C920 PRO (USB, `/dev/v4l/by-id/usb-046d_HD_Pro_Webcam_C920_*-index0`),
   pointing down. MJPG up to 1920x1080@30. Has manual exposure (100 us units),
@@ -62,8 +64,11 @@ other pictures if needed
 
 - Code is written on the laptop, pushed to `main`, then `git pull` on the Pi.
 - `tools/capture.py` saves locked frames + odometry to `data/captures/`
-  (gitignored); `tools/power.py` shows both batteries; `tools/diag_i2c_wiggle.py`
+  (gitignored); `tools/camera_cal.py` calibrates the camera with
+  `docs/checkerboard_25mm.pdf`; `tools/imu.py` checks the BNO055 and runs
+  gyro turns; `tools/power.py` shows both batteries; `tools/diag_i2c_wiggle.py`
   hunts loose Uno-driver wires.
+- Tests: `python3 tests/test_gyro.py` on the Pi (no pytest; laptop lacks pyserial).
 - `tools/flash.sh` uploads `firmware/dunebroom_motor` (serial protocol is
   documented at the top of the sketch). `tools/rover_cli.py` and
   `tools/diag_*.py` test motion.
@@ -102,15 +107,26 @@ other pictures if needed
 9. Evaluation tools: ground-truth format, replay, precision/recall, MAPE, CV.
 10. Some form of Field UI
 
-## Status (2026-11-25)
+## Status (2026-11-26)
 
 - **Now:** motion calibrated on hardwood: ticks_per_mm = 5.36 (933.5 mm,
   straight, repeatable). Turns: 7.54 ticks/deg, but skid turns scatter
   ~+-10% run to run (4 x 90 deg came out 450 deg). Encoder-only turning
   isn't accurate enough for lane ends. Fix: Adafruit BNO055 IMU ordered
   2026-11-25 (arrives ~11-29); plan to wire it to the Pi in UART mode (PS1
-  high) to avoid Pi I2C clock-stretching trouble, then turn by heading.
+  high) to avoid Pi I2C clock-stretching trouble. Code ready, untested on
+  hardware: `rover/imu.py` (UART, IMUPLUS mode, unwrapped clockwise yaw) and
+  `rover/heading.py` (encoder turn, then gyro-measured corrections; learns
+  the measured/commanded ratio; turns to absolute headings; lanes driven in
+  segments re-squared between them). Simulated: 98% of turns within 1.5 deg.
+  Pi UART enabled. Sunday: wire it, `tools/imu.py watch`, then `turn`.
   Recheck distance on sand.
+- **Camera calibration (roadmap 3) ready, not run:** `tools/camera_cal.py`
+  (aim / snap / solve / ground) fits the lens from 15-20 checkerboard views
+  and gets height, tilt, mm/px and footprint into
+  `config/camera_calibration.json`. Tested on synthetic images. Waiting
+  for the mast and camera clip to be glued (they twist/wiggle; hot glue
+  arrives 11-27). Then set `[camera] focus` to a fixed value first.
 - **Watch: flaky I2C** between Uno and driver. 2026-11-25: `ERR I2C` at
   startup, then a lost stop left the robot driving forward after DONE TARGET
   until a new connection reset the Uno. Firmware v5 retries stops and

@@ -4,6 +4,13 @@ One short entry per day, newest at the top: approximate hours, then a few
 high-level bullets on what was done, found and decided. Details live in
 commits and `AGENTS.md`.
 
+## 2026-11-26 — ~1.5 h
+- Mast braced with a zip-tie triangle, off the Arduino; the mast joints and
+  camera clip still twist, to be fixed with hot glue.
+- Wrote the camera calibration tool and a printable checkerboard.
+- Wrote the gyro code (heading-checked turns and straight lanes), tested in
+  simulation; enabled the Pi's serial port for it.
+
 ## 2026-11-25 — ~2.5 h
 
 - Turn tests: skid turns vary ~10% run to run, so turning by encoder counts
