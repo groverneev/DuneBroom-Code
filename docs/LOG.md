@@ -4,12 +4,14 @@ One short entry per day, newest at the top: approximate hours, then a few
 high-level bullets on what was done, found and decided. Details live in
 commits and `AGENTS.md`.
 
-## 2026-11-26 — ~1.5 h
+## 2026-11-26 — ~2 h
 - Mast braced with a zip-tie triangle, off the Arduino; the mast joints and
   camera clip still twist, to be fixed with hot glue.
 - Wrote the camera calibration tool and a printable checkerboard.
 - Wrote the gyro code (heading-checked turns and straight lanes), tested in
   simulation; enabled the Pi's serial port for it.
+- Wrote the survey program (lane planning, driving, saving photos with
+  positions) and tested it on a simulated robot.
 
 ## 2026-11-25 — ~2.5 h
 

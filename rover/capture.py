@@ -2,7 +2,8 @@
 
 A capture folder holds:
     frames/000001.jpg ...   the photos
-    frames.csv              index, file, unix time, left/right ticks (blank without odometry)
+    frames.csv              index, file, unix time, left/right ticks (blank without odometry),
+                            then any extra columns the caller asks for (survey: pose, phase, lane)
     camera.json             camera config and the locked settings
 """
 
@@ -33,11 +34,14 @@ def new_capture_dir(label: str = "") -> Path:
 class Recorder:
     """Saves frames at `save_fps` on a background thread until stop()."""
 
-    def __init__(self, camera: Camera, out_dir: Path, save_fps: float, odometry: Odometry | None = None):
+    def __init__(self, camera: Camera, out_dir: Path, save_fps: float, odometry: Odometry | None = None,
+                 extra_fields: list[str] | None = None, extra: Callable[[], list] | None = None):
         self.camera = camera
         self.out_dir = out_dir
         self.period = 1.0 / save_fps
         self.odometry = odometry
+        self.extra_fields = extra_fields or []
+        self.extra = extra
         self.count = 0
         self.error: Exception | None = None
         self._stop = threading.Event()
@@ -61,7 +65,7 @@ class Recorder:
         try:
             with open(self.out_dir / "frames.csv", "w", newline="") as f:
                 writer = csv.writer(f)
-                writer.writerow(["index", "file", "unix_time", "left_ticks", "right_ticks"])
+                writer.writerow(["index", "file", "unix_time", "left_ticks", "right_ticks", *self.extra_fields])
                 next_t = time.monotonic()
                 while not self._stop.is_set():
                     t, frame = self.camera.read()  # always read: keeps the buffer fresh
@@ -69,10 +73,11 @@ class Recorder:
                         continue
                     next_t += self.period
                     odo = self.odometry() if self.odometry else None
+                    more = self.extra() if self.extra else []
                     self.count += 1
                     name = f"{self.count:06d}.jpg"
                     (self.out_dir / "frames" / name).write_bytes(self.camera.encode_jpeg(frame))
-                    writer.writerow([self.count, f"frames/{name}", f"{t:.3f}", *(odo or ("", ""))])
+                    writer.writerow([self.count, f"frames/{name}", f"{t:.3f}", *(odo or ("", "")), *more])
                     f.flush()
         except Exception as e:  # surfaced by stop()
             self.error = e

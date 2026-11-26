@@ -68,7 +68,9 @@ other pictures if needed
   `docs/checkerboard_25mm.pdf`; `tools/imu.py` checks the BNO055 and runs
   gyro turns; `tools/power.py` shows both batteries; `tools/diag_i2c_wiggle.py`
   hunts loose Uno-driver wires.
-- Tests: `python3 tests/test_gyro.py` on the Pi (no pytest; laptop lacks pyserial).
+- `tools/survey.py plan|run --width W --length L` (metres) plans/runs a
+  survey; `run --dry-run` uses the simulated rover (`rover/sim.py`).
+- Tests: `python3 tests/test_gyro.py` and `tests/test_survey.py` on the Pi (no pytest; laptop lacks pyserial).
 - `tools/flash.sh` uploads `firmware/dunebroom_motor` (serial protocol is
   documented at the top of the sketch). `tools/rover_cli.py` and
   `tools/diag_*.py` test motion.
@@ -139,6 +141,14 @@ other pictures if needed
 - **Capture (roadmap 2) started 2026-11-25:** camera locking and frame
   capture with odometry work (5 fps, 1080p). Indoors the 8 ms exposure cap
   forces max gain (noisy); check frames in daylight. Not yet run while driving.
+- **Survey runner (roadmap 4) written, simulated only:** `rover/survey.py`
+  plans serpentine lanes from the camera footprint (20% side overlap),
+  drives them in 500 mm segments steering back onto each lane's line by
+  odometry (encoders + gyro yaw), checks the power guard between moves, and
+  saves frames.csv with pose/heading/phase/lane per frame, events.jsonl and
+  summary.json under `data/surveys/`. Dry runs end within ~3 cm of the
+  planned line. To measure: `[survey] camera_ahead_mm`. Stopping every
+  segment may be slow/jerky: revisit after the blur test.
 - **Power guards:** `rover/power.py` reads Pi % and motor pack V; PowerGuard
   is ready for the survey runner: one minimum per battery (Pi 12 %, motor
   10.5 V) for both starting and stopping.
