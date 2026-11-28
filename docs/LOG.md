@@ -4,6 +4,12 @@ One short entry per day, newest at the top: approximate hours, then a few
 high-level bullets on what was done, found and decided. Details live in
 commits and `AGENTS.md`.
 
+## 2026-11-28 — ~1 h
+- Calibrated the camera: 27 cm up, level, each photo covers 37 x 21 cm of
+  ground at 0.19 mm per pixel. Tilting the paper board didn't work (it bent),
+  so the lens fit uses flat photos plus a tape-measured height instead.
+- A 3 x 5 m plot is now 10 lanes, about 6 minutes of driving.
+
 ## 2026-11-27 — ~2 h
 - Fitted the Pi 5 Active Cooler; the stress test now passes with no
   throttling (73-75 °C, was 84 °C).
