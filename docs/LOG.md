@@ -7,14 +7,13 @@ commits and `AGENTS.md`.
 ## 2026-11-27 — ~2 h
 - Fitted the Pi 5 Active Cooler; the stress test now passes with no
   throttling (73-75 °C, was 84 °C).
-- Found the mast twists because its base fitting rotates on the chassis;
-  strapping it down and hot gluing it.
+- Found the mast twists because its base fitting rotates on the chassis.
+- Hot glued the mast base fitting, the camera clip and other loose parts down.
 - First look through the camera at the checkerboard: it sits ~26 cm up (not
   the ~45 cm assumed), so one frame sees ~37 x 21 cm, and it leaned ~5 deg.
 - Added a live browser view of the camera with a tilt readout; used it to
   aim the camera level before gluing the clip.
 
-<img src="images/2026-11-27-pi-active-cooler.jpg" alt="Raspberry Pi 5 with the Active Cooler fitted" width="420">
 <img src="images/2026-11-27-camera-aim-level.jpg" alt="Live camera view of the checkerboard reading height 262 mm, level both ways" width="420">
 
 ## 2026-11-26 — ~2 h

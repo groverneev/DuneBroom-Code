@@ -128,7 +128,7 @@ other pictures if needed
   `tools/live_view.py` + the printed board: camera ~262 mm above the floor
   (not the ~450 mm first assumed), level both ways (was ~5 deg), one frame
   sees ~369 x 208 mm at 0.19 mm/px (rough: lens not yet fitted). Mast base
-  fitting and camera clip being hot glued. Next: set `[camera] focus`
+  fitting, camera clip and other loose parts hot glued 2026-11-27. Next: set `[camera] focus`
   (autofocus picks 40-45 here), then `snap` 15-20 views, `solve`, `ground`.
   Open question: keep 26 cm or raise the camera (raising ~halves the lanes).
 - **Watch: flaky I2C** between Uno and driver. 2026-11-25: `ERR I2C` at
