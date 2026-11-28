@@ -7,6 +7,7 @@ commits and `AGENTS.md`.
 ## 2026-11-27 — ~1 h
 - Fitted the Pi 5 Active Cooler; the stress test now passes with no throttling.
 - Found the mast twists because its base fitting rotates on the chassis; strapping it down and hot gluing it.
+- Camera is ~26 cm up and tilted ~5 deg; added a live browser view with a tilt readout for aiming.
 
 ## 2026-11-26 — ~2 h
 - Mast braced with a zip-tie triangle, off the Arduino; the mast joints and

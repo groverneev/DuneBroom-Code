@@ -65,7 +65,8 @@ other pictures if needed
 - Code is written on the laptop, pushed to `main`, then `git pull` on the Pi.
 - `tools/capture.py` saves locked frames + odometry to `data/captures/`
   (gitignored); `tools/camera_cal.py` calibrates the camera with
-  `docs/checkerboard_25mm.pdf`; `tools/imu.py` checks the BNO055 and runs
+  `docs/checkerboard_25mm.pdf`; `tools/live_view.py` streams the camera to
+  http://neev-rpi5-green.local:8000 with a live tilt readout for aiming; `tools/imu.py` checks the BNO055 and runs
   gyro turns; `tools/power.py` shows both batteries; `tools/diag_i2c_wiggle.py`
   hunts loose Uno-driver wires.
 - `tools/survey.py plan|run --width W --length L` (metres) plans/runs a
