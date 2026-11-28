@@ -129,8 +129,9 @@ other pictures if needed
   (not the ~450 mm first assumed), level both ways (was ~5 deg), one frame
   sees ~369 x 208 mm at 0.19 mm/px (rough: lens not yet fitted). Mast base
   fitting, camera clip and other loose parts hot glued 2026-11-27. `[camera] focus` fixed at 45.
-  Next: `live_view.py --snap lens1` (15-20 views), `camera_cal.py solve`, `ground`.
-  Open question: keep 26 cm or raise the camera (raising ~halves the lanes).
+  19 flat views taken (lens1); a fit from flat views alone is wrong (gave a 40 deg
+  lens at 52 cm), so `solve` now needs 5+ views tilted >= 12 deg. Next: add tilted
+  views (`live_view.py --snap lens1 --min-tilt 12`), `solve`, `ground`.
 - **Watch: flaky I2C** between Uno and driver. 2026-11-25: `ERR I2C` at
   startup, then a lost stop left the robot driving forward after DONE TARGET
   until a new connection reset the Uno. Firmware v5 retries stops and

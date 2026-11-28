@@ -100,6 +100,13 @@ def calibrate(corner_sets: list[np.ndarray], size: tuple[int, int],
     return model, per_view
 
 
+def board_tilt_deg(model: CameraModel, corners: np.ndarray, square_mm: float = SQUARE_MM) -> float:
+    """Angle between the board and the image plane (0 = board square-on to the camera)."""
+    ok, rvec, _ = cv2.solvePnP(board_points(square_mm), corners, model.K_np, model.dist_np)
+    R, _ = cv2.Rodrigues(rvec)
+    return float(np.degrees(np.arccos(min(1.0, abs(R[2, 2])))))
+
+
 def ground_from_board(model: CameraModel, corners: np.ndarray, square_mm: float = SQUARE_MM) -> Ground:
     """Camera pose over the plane the board lies on."""
     ok, rvec, tvec = cv2.solvePnP(board_points(square_mm), corners, model.K_np, model.dist_np)

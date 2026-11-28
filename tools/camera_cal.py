@@ -10,7 +10,7 @@
 
 Board: docs/checkerboard_25mm.pdf; pass --square-mm if the print isn't 25.0.
 Lens views: 15-20 snaps, board covering every part of the frame, some flat and
-some propped up 20-40 deg on each side. Focus must be fixed ([camera] focus)
+at least 5 propped up 20-40 deg on each side (solve refuses without them). Focus must be fixed ([camera] focus)
 before snap/solve/ground, since the lens model changes with focus.
 Files: data/calib/<session>/NNN.jpg (gitignored); result config/camera_calibration.json.
 """
@@ -29,9 +29,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from rover.camera import Camera, load_camera_config  # noqa: E402
 from rover.camera_model import (  # noqa: E402
-    CALIBRATION_PATH, PATTERN, CameraModel, approx_model, calibrate, find_board, ground_from_board,
+    CALIBRATION_PATH, PATTERN, CameraModel, approx_model, board_tilt_deg, calibrate, find_board,
+    ground_from_board,
 )
 
+# Flat-only views can't separate focal length from distance (2026-11-27: 19 flat
+# views fitted a 40 deg lens at 52 cm for a 70 deg lens at 26 cm). Demand tilted ones.
+TILTED_DEG = 12
+MIN_TILTED = 5
 CALIB_DIR = Path(__file__).resolve().parent.parent / "data" / "calib"
 # The board sits still, so a longer exposure than the driving cap is fine (less gain noise).
 STILL_EXPOSURE_MAX = 300
@@ -142,6 +147,12 @@ def cmd_solve(args) -> None:
     if len(keep) < len(sets):
         print("dropping views:", ", ".join(paths[i].name for i in range(len(sets)) if i not in keep))
         model, per_view = calibrate([sets[i] for i in keep], size, args.square_mm)
+    tilts = [board_tilt_deg(model, c, args.square_mm) for c in sets]
+    n_tilted = sum(t >= TILTED_DEG for t in tilts)
+    print(f"board tilt per view (deg): {', '.join(f'{t:.0f}' for t in tilts)}")
+    if n_tilted < MIN_TILTED:
+        sys.exit(f"only {n_tilted} views tilted >= {TILTED_DEG} deg; need {MIN_TILTED}+ (prop one edge "
+                 f"of the board up 20-30 deg, each side). Not saved.")
     model.focus = load_camera_config().focus
     model.notes = {"session": args.session, "square_mm": args.square_mm}
     if CALIBRATION_PATH.exists():

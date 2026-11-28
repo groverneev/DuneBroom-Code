@@ -30,7 +30,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from rover.camera import Camera, load_camera_config  # noqa: E402
 from rover.camera_model import (  # noqa: E402
-    CALIBRATION_PATH, PATTERN, SQUARE_MM, CameraModel, approx_model, find_board, ground_from_board,
+    CALIBRATION_PATH, PATTERN, SQUARE_MM, CameraModel, approx_model, board_tilt_deg, find_board,
+    ground_from_board,
 )
 
 OK_DEG = 1.5
@@ -40,6 +41,8 @@ STILL_EXPOSURE_MAX = 300   # as camera_cal.py: board is still, so less gain nois
 STEADY_PX = 2.5            # corners moved less than this between checks = held still
 NEW_VIEW_PX = 60           # mean corner distance from every saved view = somewhere new
 SNAP_TARGET = 18
+TILTED_DEG = 12            # as camera_cal.py solve
+TILTED_TARGET = 8
 
 PAGE = b"""<!doctype html><html><head><meta name=viewport content="width=device-width">
 <title>DuneBroom camera</title></head>
@@ -54,6 +57,8 @@ class Shared:
         self.result = None       # (corners, Ground) or None
         self.result_t = 0.0
         self.saved = 0
+        self.tilted = 0
+        self.tilt = None         # board tilt of the latest detection
         self.saved_t = 0.0
 
 
@@ -82,11 +87,16 @@ def capture_loop(cam: Camera, shared: Shared, stop: threading.Event, snapping: b
         else:
             colour, lines = (0, 165, 255), ["board not found (whole board in view?)"]
         with shared.lock:
-            saved, saved_age = shared.saved, time.monotonic() - shared.saved_t
+            saved, tilted, tilt = shared.saved, shared.tilted, shared.tilt
+            saved_age = time.monotonic() - shared.saved_t
         if saved_age < 1.0:
             cv2.rectangle(out, (0, 0), (w - 1, h - 1), (0, 255, 0), 30)
         if snapping:
-            lines.append(f"saved {saved} / {SNAP_TARGET}" + ("  DONE" if saved >= SNAP_TARGET else ""))
+            if result and age < 2.0 and tilt is not None:
+                lines.append(f"board tilt {tilt:.0f} deg")
+            done = saved >= SNAP_TARGET and tilted >= TILTED_TARGET
+            lines.append(f"saved {saved} / {SNAP_TARGET}, tilted {tilted} / {TILTED_TARGET}"
+                         + ("  DONE" if done else ""))
         for i, text in enumerate(lines):
             y = 60 + i * 60
             cv2.putText(out, text, (20, y), cv2.FONT_HERSHEY_SIMPLEX, 1.6, (0, 0, 0), 8)
@@ -99,11 +109,13 @@ def capture_loop(cam: Camera, shared: Shared, stop: threading.Event, snapping: b
 
 
 def detect_loop(shared: Shared, model: CameraModel | None, square: float, stop: threading.Event,
-                snap_dir: Path | None) -> None:
+                snap_dir: Path | None, min_tilt: float) -> None:
     saved_views = [find_board(cv2.imread(str(p))) for p in sorted(snap_dir.glob("[0-9]*.jpg"))] if snap_dir else []
     saved_views = [c for c in saved_views if c is not None]
+    rough = model or approx_model(1920, 1080)
+    n_tilted = sum(board_tilt_deg(rough, c, square) >= TILTED_DEG for c in saved_views)
     with shared.lock:
-        shared.saved = len(saved_views)
+        shared.saved, shared.tilted = len(saved_views), n_tilted
     prev = None
     while not stop.is_set():
         with shared.lock:
@@ -114,8 +126,9 @@ def detect_loop(shared: Shared, model: CameraModel | None, square: float, stop: 
         m = model or approx_model(frame.shape[1], frame.shape[0])
         corners = find_board(frame)
         result = (corners, ground_from_board(m, corners, square)) if corners is not None else None
+        tilt = board_tilt_deg(m, corners, square) if corners is not None else None
         with shared.lock:
-            shared.result, shared.result_t = result, time.monotonic()
+            shared.result, shared.result_t, shared.tilt = result, time.monotonic(), tilt
         if snap_dir is None:
             continue
         if corners is None:
@@ -124,13 +137,14 @@ def detect_loop(shared: Shared, model: CameraModel | None, square: float, stop: 
         steady = prev is not None and mean_dist(corners, prev) < STEADY_PX
         new = all(mean_dist(corners, c) > NEW_VIEW_PX for c in saved_views)
         prev = corners
-        if steady and new:
+        if steady and new and tilt >= min_tilt:
             n = len(list(snap_dir.glob("[0-9]*.jpg"))) + 1
             cv2.imwrite(str(snap_dir / f"{n:03d}.jpg"), frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
             saved_views.append(corners)
+            n_tilted += tilt >= TILTED_DEG
             with shared.lock:
-                shared.saved, shared.saved_t = len(saved_views), time.monotonic()
-            print(f"view {n} saved", flush=True)
+                shared.saved, shared.tilted, shared.saved_t = len(saved_views), n_tilted, time.monotonic()
+            print(f"view {n} saved (tilt {tilt:.0f} deg)", flush=True)
 
 
 def mean_dist(a: np.ndarray, b: np.ndarray) -> float:
@@ -175,6 +189,7 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--square-mm", type=float, default=SQUARE_MM)
     parser.add_argument("--snap", metavar="SESSION", help="save calibration views to data/calib/SESSION")
+    parser.add_argument("--min-tilt", type=float, default=0, help="with --snap: only save views tilted this much")
     args = parser.parse_args()
 
     model = CameraModel.load() if CALIBRATION_PATH.exists() else None
@@ -190,7 +205,7 @@ def main() -> None:
     else:
         cam = Camera().open(lock=False)
     threads = [threading.Thread(target=capture_loop, args=(cam, shared, stop, snap_dir is not None), daemon=True),
-               threading.Thread(target=detect_loop, args=(shared, model, args.square_mm, stop, snap_dir),
+               threading.Thread(target=detect_loop, args=(shared, model, args.square_mm, stop, snap_dir, args.min_tilt),
                                 daemon=True)]
     for t in threads:
         t.start()
