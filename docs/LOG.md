@@ -4,6 +4,10 @@ One short entry per day, newest at the top: approximate hours, then a few
 high-level bullets on what was done, found and decided. Details live in
 commits and `AGENTS.md`.
 
+## 2026-11-27 — ~1 h
+- Fitted the Pi 5 Active Cooler; the stress test now passes with no throttling.
+- Found the mast twists because its base fitting rotates on the chassis; strapping it down and hot gluing it.
+
 ## 2026-11-26 — ~2 h
 - Mast braced with a zip-tie triangle, off the Arduino; the mast joints and
   camera clip still twist, to be fixed with hot glue.

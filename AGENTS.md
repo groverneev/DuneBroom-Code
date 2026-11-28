@@ -155,8 +155,7 @@ other pictures if needed
 - **Blocked:** nothing.
 - **PiPower 5 installed (2026-11-22):** power side passes. Under 4-core
   stress on the 96 W charger: no undervoltage, source stays external, battery
-  charges. Not yet tested with the Anker. **Cooling fails:** the SoC hit 84 °C
-  after 2 min of stress (soft throttle) despite a fan; the HAT on top likely
-  blocks airflow. Official Pi 5 Active Cooler ordered 2026-11-25; needs
-  ~12 mm under the HAT. Fit it, then re-run the 10-min stress test. Still to
-  do: a chassis mount for the Pi + HAT.
+  charges. Not yet tested with the Anker. **Cooling passes (2026-11-27):**
+  official Active Cooler fitted under the HAT; 10-min 4-core stress on
+  battery levels at 73-75 °C, 2.4 GHz throughout, throttled=0x0, fan ~8800
+  rpm (was 84 °C and throttling). Still to do: a chassis mount for the Pi + HAT.
