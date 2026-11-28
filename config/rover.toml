@@ -69,8 +69,8 @@ side_overlap = 0.2        # fraction of the view width shared by neighbouring la
 # Ground seen by one frame, across and along the direction of travel.
 # camera_calibration.json replaces these once the camera is calibrated
 # (`across` = its footprint width if the image's long side is across).
-footprint_across_mm = 670
-footprint_along_mm = 380
+footprint_across_mm = 370   # rough, from the aim check at ~262 mm height
+footprint_along_mm = 210
 camera_across = "width"   # which image side is across the lane: width / height
 # How far the view's centre is ahead of the rover's turning centre. Turning
 # 180 deg moves the view by twice this, so lane ends drive it back. MEASURE.

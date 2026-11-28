@@ -110,7 +110,7 @@ other pictures if needed
 9. Evaluation tools: ground-truth format, replay, precision/recall, MAPE, CV.
 10. Some form of Field UI
 
-## Status (2026-11-26)
+## Status (2026-11-27)
 
 - **Now:** motion calibrated on hardwood: ticks_per_mm = 5.36 (933.5 mm,
   straight, repeatable). Turns: 7.54 ticks/deg, but skid turns scatter
@@ -124,12 +124,13 @@ other pictures if needed
   segments re-squared between them). Simulated: 98% of turns within 1.5 deg.
   Pi UART enabled. Sunday: wire it, `tools/imu.py watch`, then `turn`.
   Recheck distance on sand.
-- **Camera calibration (roadmap 3) ready, not run:** `tools/camera_cal.py`
-  (aim / snap / solve / ground) fits the lens from 15-20 checkerboard views
-  and gets height, tilt, mm/px and footprint into
-  `config/camera_calibration.json`. Tested on synthetic images. Waiting
-  for the mast and camera clip to be glued (they twist/wiggle; hot glue
-  arrives 11-27). Then set `[camera] focus` to a fixed value first.
+- **Camera calibration (roadmap 3) in progress:** aimed 2026-11-27 with
+  `tools/live_view.py` + the printed board: camera ~262 mm above the floor
+  (not the ~450 mm first assumed), level both ways (was ~5 deg), one frame
+  sees ~369 x 208 mm at 0.19 mm/px (rough: lens not yet fitted). Mast base
+  fitting and camera clip being hot glued. Next: set `[camera] focus`
+  (autofocus picks 40-45 here), then `snap` 15-20 views, `solve`, `ground`.
+  Open question: keep 26 cm or raise the camera (raising ~halves the lanes).
 - **Watch: flaky I2C** between Uno and driver. 2026-11-25: `ERR I2C` at
   startup, then a lost stop left the robot driving forward after DONE TARGET
   until a new connection reset the Uno. Firmware v5 retries stops and
@@ -153,6 +154,8 @@ other pictures if needed
 - **Power guards:** `rover/power.py` reads Pi % and motor pack V; PowerGuard
   is ready for the survey runner: one minimum per battery (Pi 12 %, motor
   10.5 V) for both starting and stopping.
+- **Watch: Wi-Fi drops:** the Pi fell off Wi-Fi for a few minutes on
+  2026-11-27 without rebooting; probably Wi-Fi power saving. Disable it if it recurs.
 - **Blocked:** nothing.
 - **PiPower 5 installed (2026-11-22):** power side passes. Under 4-core
   stress on the 96 W charger: no undervoltage, source stays external, battery
