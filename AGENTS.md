@@ -130,7 +130,8 @@ other pictures if needed
   distortion, fit RMS 0.94 px; `[camera] focus` fixed at 45. Fitted from 19 flat
   floor views with the focal length set by the tape-measured height
   (`solve --height-mm`): flat views alone can't fix focal length, and tilted
-  views of the loose paper bent (RMS 6.6 px). Redo if the camera moves:
+  views of the loose paper bent (RMS 6.6 px). Camera hot glued afterwards;
+  `aim` recheck unchanged (269 mm, 0.5 deg). Redo if the camera moves:
   `live_view.py --snap S`, `solve --session S --height-mm H`, `ground`.
 - **Watch: flaky I2C** between Uno and driver. 2026-11-25: `ERR I2C` at
   startup, then a lost stop left the robot driving forward after DONE TARGET
