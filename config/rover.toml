@@ -48,7 +48,7 @@ settle_s = 3.0
 # = ~2 mm of smear. Indoors auto wants ~330, so frames come out dark/noisy.
 exposure_max = 80
 # -1 = use the autofocus value at lock time; else 0-250 (C920: 45 at ~floor).
-focus = -1
+focus = 45    # fixed for the lens calibration (autofocus picked 40-45 at 262 mm)
 jpeg_quality = 90
 
 [power]
