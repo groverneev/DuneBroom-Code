@@ -5,12 +5,17 @@
                                                      height, tilt, autofocus value
     python3 tools/camera_cal.py snap  --session S    save one view for the lens fit
     python3 tools/camera_cal.py solve --session S    fit the lens model -> config
+    python3 tools/camera_cal.py solve --session S --height-mm H
+                                                     same from flat floor views only, with the
+                                                     lens-to-floor height measured by tape
     python3 tools/camera_cal.py ground               board flat on the floor:
                                                      height, tilt, mm/px, footprint -> config
 
 Board: docs/checkerboard_25mm.pdf; pass --square-mm if the print isn't 25.0.
 Lens views: 15-20 snaps, board covering every part of the frame, some flat and
-at least 5 propped up 20-40 deg on each side (solve refuses without them). Focus must be fixed ([camera] focus)
+at least 5 propped up 20-40 deg on each side (solve refuses without them), on
+a rigid backing. Or: flat views only plus a tape-measured height (--height-mm);
+tilted views are then ignored. Focus must be fixed ([camera] focus)
 before snap/solve/ground, since the lens model changes with focus.
 Files: data/calib/<session>/NNN.jpg (gitignored); result config/camera_calibration.json.
 """
@@ -30,13 +35,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from rover.camera import Camera, load_camera_config  # noqa: E402
 from rover.camera_model import (  # noqa: E402
     CALIBRATION_PATH, PATTERN, CameraModel, approx_model, board_tilt_deg, calibrate, find_board,
-    ground_from_board,
+    focal_from_height, ground_from_board,
 )
 
 # Flat-only views can't separate focal length from distance (2026-11-27: 19 flat
 # views fitted a 40 deg lens at 52 cm for a 70 deg lens at 26 cm). Demand tilted ones.
 TILTED_DEG = 12
 MIN_TILTED = 5
+FLAT_DEG = 5               # --height-mm uses only views lying flat on the floor
 CALIB_DIR = Path(__file__).resolve().parent.parent / "data" / "calib"
 # The board sits still, so a longer exposure than the driving cap is fine (less gain noise).
 STILL_EXPOSURE_MAX = 300
@@ -138,23 +144,37 @@ def print_coverage(folder: Path) -> None:
 def cmd_solve(args) -> None:
     folder = CALIB_DIR / args.session
     sets, paths, size = load_views(folder)
+    focal = None
+    if args.height_mm:
+        rough = approx_model(*size)
+        flat = [i for i, c in enumerate(sets) if board_tilt_deg(rough, c, args.square_mm) < FLAT_DEG]
+        if len(flat) < len(sets):
+            print("ignoring tilted views:", ", ".join(paths[i].name for i in range(len(sets)) if i not in flat))
+        sets, paths = [sets[i] for i in flat], [paths[i] for i in flat]
     if len(sets) < 8:
         sys.exit(f"only {len(sets)} usable views in {folder}; take at least 8 (15-20 is better)")
-    model, per_view = calibrate(sets, size, args.square_mm)
+    if args.height_mm:
+        focal = focal_from_height(sets, size, args.height_mm, args.square_mm)
+    model, per_view = calibrate(sets, size, args.square_mm, focal)
     # Drop clear outliers (a smudged or moved view) and refit once.
     med = float(np.median(per_view))
     keep = [i for i, e in enumerate(per_view) if e <= max(3 * med, 0.5)]
     if len(keep) < len(sets):
         print("dropping views:", ", ".join(paths[i].name for i in range(len(sets)) if i not in keep))
-        model, per_view = calibrate([sets[i] for i in keep], size, args.square_mm)
+        sets = [sets[i] for i in keep]
+        if args.height_mm:
+            focal = focal_from_height(sets, size, args.height_mm, args.square_mm)
+        model, per_view = calibrate(sets, size, args.square_mm, focal)
     tilts = [board_tilt_deg(model, c, args.square_mm) for c in sets]
     n_tilted = sum(t >= TILTED_DEG for t in tilts)
     print(f"board tilt per view (deg): {', '.join(f'{t:.0f}' for t in tilts)}")
-    if n_tilted < MIN_TILTED:
+    if not args.height_mm and n_tilted < MIN_TILTED:
         sys.exit(f"only {n_tilted} views tilted >= {TILTED_DEG} deg; need {MIN_TILTED}+ (prop one edge "
                  f"of the board up 20-30 deg, each side). Not saved.")
     model.focus = load_camera_config().focus
-    model.notes = {"session": args.session, "square_mm": args.square_mm}
+    model.notes = {"session": args.session, "square_mm": args.square_mm,
+                   "method": f"flat views, focal from measured height {args.height_mm} mm" if args.height_mm
+                   else "flat + tilted views"}
     if CALIBRATION_PATH.exists():
         model.ground = None  # the old ground pose used the old lens model: redo `ground`
     model.save()
@@ -188,6 +208,9 @@ def main() -> None:
     for name in ("snap", "solve"):
         p = sub.add_parser(name)
         p.add_argument("--session", default="lens")
+        if name == "solve":
+            p.add_argument("--height-mm", type=float, help="tape-measured lens-to-floor height; "
+                           "fits from flat floor views alone")
     sub.add_parser("ground")
     args = parser.parse_args()
     {"aim": cmd_aim, "snap": cmd_snap, "solve": cmd_solve, "ground": cmd_ground}[args.cmd](args)

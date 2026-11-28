@@ -87,17 +87,41 @@ def find_board(image: np.ndarray) -> np.ndarray | None:
 
 
 def calibrate(corner_sets: list[np.ndarray], size: tuple[int, int],
-              square_mm: float = SQUARE_MM) -> tuple[CameraModel, list[float]]:
-    """Lens model from board views; also each view's RMS error (px)."""
+              square_mm: float = SQUARE_MM, focal_px: float | None = None) -> tuple[CameraModel, list[float]]:
+    """Lens model from board views; also each view's RMS error (px).
+
+    focal_px fixes the focal length (and centres the principal point): use it
+    when all views are flat on the floor, which can't tell focal length from
+    distance on their own (see focal_from_height)."""
     obj = board_points(square_mm)
+    flags, K0 = cv2.CALIB_FIX_K3, None
+    if focal_px is not None:
+        w, h = size
+        K0 = np.array([[focal_px, 0, (w - 1) / 2], [0, focal_px, (h - 1) / 2], [0, 0, 1]])
+        flags |= cv2.CALIB_USE_INTRINSIC_GUESS | cv2.CALIB_FIX_FOCAL_LENGTH | cv2.CALIB_FIX_PRINCIPAL_POINT
     rms, K, dist, rvecs, tvecs = cv2.calibrateCamera(
-        [obj] * len(corner_sets), corner_sets, size, None, None, flags=cv2.CALIB_FIX_K3)
+        [obj] * len(corner_sets), corner_sets, size, K0, None, flags=flags)
     per_view = []
     for c, r, t in zip(corner_sets, rvecs, tvecs):
         proj, _ = cv2.projectPoints(obj, r, t, K, dist)
         per_view.append(float(np.sqrt(np.mean(np.sum((proj - c) ** 2, axis=2)))))
     model = CameraModel(size[0], size[1], K.tolist(), dist.ravel().tolist(), float(rms), len(corner_sets))
     return model, per_view
+
+
+def focal_from_height(corner_sets: list[np.ndarray], size: tuple[int, int], height_mm: float,
+                      square_mm: float = SQUARE_MM) -> float:
+    """Focal length (px) that puts boards lying on the floor at the measured
+    camera height: distance from a flat view scales with the focal length used."""
+    f = approx_model(*size).K[0][0]
+    for _ in range(3):  # refine once the distortion is known
+        model, _ = calibrate(corner_sets, size, square_mm, focal_px=f)
+        dists = []
+        for c in corner_sets:
+            ok, _, t = cv2.solvePnP(board_points(square_mm), c, model.K_np, model.dist_np)
+            dists.append(float(t.ravel()[2]))
+        f *= height_mm / float(np.median(dists))
+    return f
 
 
 def board_tilt_deg(model: CameraModel, corners: np.ndarray, square_mm: float = SQUARE_MM) -> float:
