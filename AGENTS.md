@@ -66,7 +66,7 @@ other pictures if needed
 - `tools/capture.py` saves locked frames + odometry to `data/captures/`
   (gitignored); `tools/camera_cal.py` calibrates the camera with
   `docs/checkerboard_25mm.pdf`; `tools/live_view.py` streams the camera to
-  http://neev-rpi5-green.local:8000 with a live tilt readout for aiming; `tools/imu.py` checks the BNO055 and runs
+  http://neev-rpi5-green.local:8000 with a live tilt readout for aiming (`--snap S` auto-saves lens views); `tools/imu.py` checks the BNO055 and runs
   gyro turns; `tools/power.py` shows both batteries; `tools/diag_i2c_wiggle.py`
   hunts loose Uno-driver wires.
 - `tools/survey.py plan|run --width W --length L` (metres) plans/runs a
@@ -128,8 +128,8 @@ other pictures if needed
   `tools/live_view.py` + the printed board: camera ~262 mm above the floor
   (not the ~450 mm first assumed), level both ways (was ~5 deg), one frame
   sees ~369 x 208 mm at 0.19 mm/px (rough: lens not yet fitted). Mast base
-  fitting, camera clip and other loose parts hot glued 2026-11-27. Next: set `[camera] focus`
-  (autofocus picks 40-45 here), then `snap` 15-20 views, `solve`, `ground`.
+  fitting, camera clip and other loose parts hot glued 2026-11-27. `[camera] focus` fixed at 45.
+  Next: `live_view.py --snap lens1` (15-20 views), `camera_cal.py solve`, `ground`.
   Open question: keep 26 cm or raise the camera (raising ~halves the lanes).
 - **Watch: flaky I2C** between Uno and driver. 2026-11-25: `ERR I2C` at
   startup, then a lost stop left the robot driving forward after DONE TARGET

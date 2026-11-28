@@ -2,16 +2,21 @@
 """Live camera view in a browser, with the checkerboard tilt readout (motors never move).
 
     python3 tools/live_view.py            then open http://neev-rpi5-green.local:8000
+    python3 tools/live_view.py --snap S   also save lens-calibration views to
+                                          data/calib/S/ (for camera_cal.py solve)
 
 Camera runs on auto (exposure/focus/white balance). When the printed board
 (docs/checkerboard_25mm.pdf) is fully in view, height and tilt are measured
 about twice a second and drawn on the picture: green when within 1.5 deg.
+With --snap the camera is locked (fixed [camera] focus) and a view is saved
+whenever the whole board is held still somewhere new; the count is shown.
 Ctrl+C to stop (frees the camera for other tools).
 """
 
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import sys
 import threading
 import time
@@ -19,16 +24,22 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import cv2
+import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from rover.camera import Camera  # noqa: E402
+from rover.camera import Camera, load_camera_config  # noqa: E402
 from rover.camera_model import (  # noqa: E402
     CALIBRATION_PATH, PATTERN, SQUARE_MM, CameraModel, approx_model, find_board, ground_from_board,
 )
 
 OK_DEG = 1.5
 STREAM_WIDTH = 960
+CALIB_DIR = Path(__file__).resolve().parent.parent / "data" / "calib"
+STILL_EXPOSURE_MAX = 300   # as camera_cal.py: board is still, so less gain noise
+STEADY_PX = 2.5            # corners moved less than this between checks = held still
+NEW_VIEW_PX = 60           # mean corner distance from every saved view = somewhere new
+SNAP_TARGET = 18
 
 PAGE = b"""<!doctype html><html><head><meta name=viewport content="width=device-width">
 <title>DuneBroom camera</title></head>
@@ -42,13 +53,15 @@ class Shared:
         self.jpeg = b""          # latest annotated stream JPEG
         self.result = None       # (corners, Ground) or None
         self.result_t = 0.0
+        self.saved = 0
+        self.saved_t = 0.0
 
 
 def lean_text(v: float, pos: str, neg: str) -> str:
     return "level" if abs(v) < 0.5 else f"{abs(v):.1f} deg toward {pos if v > 0 else neg}"
 
 
-def capture_loop(cam: Camera, shared: Shared, stop: threading.Event) -> None:
+def capture_loop(cam: Camera, shared: Shared, stop: threading.Event, snapping: bool) -> None:
     while not stop.is_set():
         _, frame = cam.read()
         with shared.lock:
@@ -68,6 +81,12 @@ def capture_loop(cam: Camera, shared: Shared, stop: threading.Event) -> None:
                      f"left/right: {lean_text(g.lean_right_deg, 'RIGHT', 'LEFT')}"]
         else:
             colour, lines = (0, 165, 255), ["board not found (whole board in view?)"]
+        with shared.lock:
+            saved, saved_age = shared.saved, time.monotonic() - shared.saved_t
+        if saved_age < 1.0:
+            cv2.rectangle(out, (0, 0), (w - 1, h - 1), (0, 255, 0), 30)
+        if snapping:
+            lines.append(f"saved {saved} / {SNAP_TARGET}" + ("  DONE" if saved >= SNAP_TARGET else ""))
         for i, text in enumerate(lines):
             y = 60 + i * 60
             cv2.putText(out, text, (20, y), cv2.FONT_HERSHEY_SIMPLEX, 1.6, (0, 0, 0), 8)
@@ -79,7 +98,13 @@ def capture_loop(cam: Camera, shared: Shared, stop: threading.Event) -> None:
                 shared.jpeg = buf.tobytes()
 
 
-def detect_loop(shared: Shared, model: CameraModel | None, square: float, stop: threading.Event) -> None:
+def detect_loop(shared: Shared, model: CameraModel | None, square: float, stop: threading.Event,
+                snap_dir: Path | None) -> None:
+    saved_views = [find_board(cv2.imread(str(p))) for p in sorted(snap_dir.glob("[0-9]*.jpg"))] if snap_dir else []
+    saved_views = [c for c in saved_views if c is not None]
+    with shared.lock:
+        shared.saved = len(saved_views)
+    prev = None
     while not stop.is_set():
         with shared.lock:
             frame = shared.frame
@@ -91,6 +116,25 @@ def detect_loop(shared: Shared, model: CameraModel | None, square: float, stop: 
         result = (corners, ground_from_board(m, corners, square)) if corners is not None else None
         with shared.lock:
             shared.result, shared.result_t = result, time.monotonic()
+        if snap_dir is None:
+            continue
+        if corners is None:
+            prev = None
+            continue
+        steady = prev is not None and mean_dist(corners, prev) < STEADY_PX
+        new = all(mean_dist(corners, c) > NEW_VIEW_PX for c in saved_views)
+        prev = corners
+        if steady and new:
+            n = len(list(snap_dir.glob("[0-9]*.jpg"))) + 1
+            cv2.imwrite(str(snap_dir / f"{n:03d}.jpg"), frame, [cv2.IMWRITE_JPEG_QUALITY, 95])
+            saved_views.append(corners)
+            with shared.lock:
+                shared.saved, shared.saved_t = len(saved_views), time.monotonic()
+            print(f"view {n} saved", flush=True)
+
+
+def mean_dist(a: np.ndarray, b: np.ndarray) -> float:
+    return float(np.linalg.norm(a.reshape(-1, 2) - b.reshape(-1, 2), axis=1).mean())
 
 
 def make_handler(shared: Shared):
@@ -130,13 +174,24 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--square-mm", type=float, default=SQUARE_MM)
+    parser.add_argument("--snap", metavar="SESSION", help="save calibration views to data/calib/SESSION")
     args = parser.parse_args()
 
     model = CameraModel.load() if CALIBRATION_PATH.exists() else None
     shared, stop = Shared(), threading.Event()
-    cam = Camera().open(lock=False)
-    threads = [threading.Thread(target=capture_loop, args=(cam, shared, stop), daemon=True),
-               threading.Thread(target=detect_loop, args=(shared, model, args.square_mm, stop), daemon=True)]
+    snap_dir = None
+    if args.snap:
+        cfg = load_camera_config()
+        if cfg.focus is None:
+            sys.exit("Set [camera] focus in config/rover.toml first.")
+        snap_dir = CALIB_DIR / args.snap
+        snap_dir.mkdir(parents=True, exist_ok=True)
+        cam = Camera(dataclasses.replace(cfg, exposure_max=STILL_EXPOSURE_MAX)).open()
+    else:
+        cam = Camera().open(lock=False)
+    threads = [threading.Thread(target=capture_loop, args=(cam, shared, stop, snap_dir is not None), daemon=True),
+               threading.Thread(target=detect_loop, args=(shared, model, args.square_mm, stop, snap_dir),
+                                daemon=True)]
     for t in threads:
         t.start()
     server = ThreadingHTTPServer(("0.0.0.0", args.port), make_handler(shared))
